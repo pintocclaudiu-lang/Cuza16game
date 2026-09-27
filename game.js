@@ -254,7 +254,7 @@ function getDayKey() {
 }
 
 function getDayOfWeek() {
-  return new Date().getDay();
+  return new Date().getDay(); // 0=Duminică, 1=Luni...6=Sâmbătă
 }
 
 function showModal(content) {
@@ -275,7 +275,7 @@ function shuffle(arr) {
   return a;
 }
 
-// ── Citire date utilizator (cu retry 5x) ─────────────────────────────────────
+// ── Citire date utilizator (cu retry) ────────────────────────────────────────
 async function loadUserData(uid) {
   for (let i = 0; i < 5; i++) {
     const snap = await getDoc(doc(db, "users", uid));
@@ -285,11 +285,13 @@ async function loadUserData(uid) {
   return null;
 }
 
+// ── Actualizare scoruri în header ─────────────────────────────────────────────
 function updateScoreHeader(data) {
   document.getElementById("total-wallet").textContent = (data.totalWallet || 0) + " pct";
   document.getElementById("weekly-score").textContent = (data.weeklyScore  || 0) + " pct";
 }
 
+// ── Adaugă puncte în Firestore ────────────────────────────────────────────────
 async function addPoints(uid, points, dayKey) {
   try {
     await updateDoc(doc(db, "users", uid), {
@@ -308,6 +310,7 @@ async function addPoints(uid, points, dayKey) {
   }
 }
 
+// ── Reset săptămânal ──────────────────────────────────────────────────────────
 async function checkWeeklyReset(uid, data) {
   const newWeekId = getWeekId();
   if (data.currentWeekId && data.currentWeekId !== newWeekId) {
@@ -357,9 +360,9 @@ function renderTapGame(emoji, label, dayKey) {
 
   if (alreadyPlayed) return;
 
-  let tapCount      = 0;
-  let running       = false;
-  let timeLeft      = TAP_DURATION_SEC;
+  let tapCount     = 0;
+  let running      = false;
+  let timeLeft     = TAP_DURATION_SEC;
   let timerInterval = null;
 
   const targetEl = document.getElementById("tap-target");
