@@ -37,12 +37,16 @@ function getWeekId() {
   return `${monday.getFullYear()}-W${String(monday.getMonth()+1).padStart(2,'0')}-${String(monday.getDate()).padStart(2,'0')}`;
 }
 
+// ── Respectă testDay din localStorage (setat de test bar din game.js) ──
 function isMonday() {
+  const forced = localStorage.getItem("testDay");
+  if (forced !== null) return parseInt(forced) === 1;
   return new Date().getDay() === 1;
 }
 
 function daysUntilMonday() {
-  const day = new Date().getDay();
+  const forced = localStorage.getItem("testDay");
+  const day = forced !== null ? parseInt(forced) : new Date().getDay();
   if (day === 1) return 0;
   return day === 0 ? 1 : 8 - day;
 }
@@ -172,6 +176,47 @@ function renderVaultAlreadyOpened(weekId, vaultHistory) {
   `;
 }
 
+// ── TEST BAR (șterge înainte de lansare) ──────────────────────────────────────
+function renderVaultTestBar(uid) {
+  const bar = document.createElement("div");
+  bar.id = "vault-test-bar";
+  bar.style.cssText = `
+    position:fixed;bottom:70px;left:0;right:0;
+    background:#1a1a2e;color:#fff;padding:8px 12px;
+    display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+    font-size:12px;z-index:9999;
+  `;
+  bar.innerHTML = `
+    <span style="color:#aaa;">TEST:</span>
+    <button onclick="setTestDay(1)" style="background:#f4c430;color:#000;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-weight:bold;">L (Vault)</button>
+    <button onclick="setTestDay(2)" style="background:#444;color:#fff;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;">Ma</button>
+    <button onclick="setTestDay(3)" style="background:#444;color:#fff;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;">Mi</button>
+    <button onclick="setTestDay(4)" style="background:#444;color:#fff;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;">J</button>
+    <button onclick="setTestDay(5)" style="background:#444;color:#fff;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;">V</button>
+    <button onclick="setTestDay(6)" style="background:#444;color:#fff;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;">S</button>
+    <button onclick="setTestDay(0)" style="background:#444;color:#fff;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;">D</button>
+    <button onclick="setTestDay(null)" style="background:#555;color:#fff;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;">REAL</button>
+    <button onclick="resetVault('${uid}')" style="background:#27ae60;color:#fff;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-weight:bold;">🔄 RESET VAULT</button>
+  `;
+  document.body.appendChild(bar);
+
+  window.setTestDay = function(day) {
+    if (day === null) localStorage.removeItem("testDay");
+    else localStorage.setItem("testDay", day);
+    location.reload();
+  };
+
+  window.resetVault = async function(uid) {
+    const weekId = getWeekId();
+    await updateDoc(doc(db, "users", uid), {
+      vaultOpenedThisWeek: false,
+      currentWeekId: "",
+    });
+    location.reload();
+  };
+}
+// ── SFÂRȘIT TEST BAR ───────────────────────────────────────────────────────────
+
 // ── INIȚIALIZARE ──────────────────────────────────────────────────────────────
 let initialized = false;
 
@@ -192,6 +237,10 @@ onAuthStateChanged(auth, async (user) => {
 
   updateScoreHeader(userData);
   document.getElementById("loading-state")?.remove();
+
+  // ── TEST BAR (șterge înainte de lansare) ──
+  renderVaultTestBar(user.uid);
+  // ── SFÂRȘIT TEST BAR ──
 
   const weekId        = getWeekId();
   const isOpen        = isMonday();
