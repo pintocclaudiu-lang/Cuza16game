@@ -167,17 +167,30 @@ async function purchaseItem(item) {
   const code = genCode(item.id);
   const redemptionKey = `redemptions.${code}`;
 
-  await updateDoc(doc(db, "users", currentUser.uid), {
-    totalWallet: increment(-item.cost),
-    [redemptionKey]: {
-      item:       item.id,
-      label:      item.name,
-      cost:       item.cost,
-      code:       code,
-      redeemedAt: serverTimestamp(),
-      used:       false,
-    }
-  });
+  try {
+    await updateDoc(doc(db, "users", currentUser.uid), {
+      totalWallet: increment(-item.cost),
+      [redemptionKey]: {
+        item:       item.id,
+        label:      item.name,
+        cost:       item.cost,
+        code:       code,
+        redeemedAt: serverTimestamp(),
+        used:       false,
+      }
+    });
+  } catch (err) {
+    console.error("Eroare la cumpărare:", err);
+    showModal(`
+      <div class="modal-confirm">
+        <span class="modal-confirm-emoji">⚠️</span>
+        <h2>Eroare de conexiune</h2>
+        <p>Nu s-a putut procesa recompensa. Verifică conexiunea și încearcă din nou.</p>
+        <button class="btn btn-primary" onclick="document.getElementById('modal-overlay').style.display='none'" style="width:100%;margin-top:8px;">Închide</button>
+      </div>
+    `);
+    return;
+  }
 
   // Actualizăm local
   userData.totalWallet = (userData.totalWallet || 0) - item.cost;
@@ -201,8 +214,12 @@ async function purchaseItem(item) {
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────────
+let initialized = false; // Previne re-inițializare la refresh token Firebase
+
 onAuthStateChanged(auth, async (user) => {
+  if (initialized) return;
   if (!user) { window.location.href = "index.html"; return; }
+  initialized = true;
   currentUser = user;
 
   const snap = await getDoc(doc(db, "users", user.uid));
