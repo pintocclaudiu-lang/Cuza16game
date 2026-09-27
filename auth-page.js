@@ -3,8 +3,12 @@
 import { loginUser, registerUser, resetPassword } from "./auth.js";
 import { auth, onAuthStateChanged } from "./firebase-config.js";
 
-// onAuthStateChanged simplu — funcționează corect pentru că auth.js face signOut după register
+// Flag: true în timpul înregistrării — blochează redirect-ul automat
+let isRegistering = false;
+
+// Redirecționare dacă deja autentificat (doar la LOGIN)
 onAuthStateChanged(auth, (user) => {
+  if (isRegistering) return;  // ← blocăm redirect în timpul înregistrării
   if (user) window.location.href = "game.html";
 });
 
@@ -37,6 +41,7 @@ function setLoading(btn, loading) {
   btn.textContent = loading ? "Se procesează..." : btn.dataset.label;
 }
 
+// Salvăm labelul inițial al fiecărui buton
 document.querySelectorAll(".btn-primary").forEach(btn => {
   btn.dataset.label = btn.textContent;
 });
@@ -67,13 +72,14 @@ document.getElementById("login-btn").addEventListener("click", async () => {
   setLoading(btn, true);
   try {
     await loginUser(email, password);
-    // onAuthStateChanged face redirect automat la game.html
+    // onAuthStateChanged de sus va face redirect-ul automat la game.html
   } catch (err) {
     showAlert(friendlyError(err.code));
     setLoading(btn, false);
   }
 });
 
+// Enter pe câmpul de parolă declanșează login
 document.getElementById("login-password").addEventListener("keydown", (e) => {
   if (e.key === "Enter") document.getElementById("login-btn").click();
 });
@@ -102,9 +108,13 @@ document.getElementById("register-btn").addEventListener("click", async () => {
     return;
   }
 
+  isRegistering = true;  // ← blocăm redirect-ul automat
   setLoading(btn, true);
+
   try {
     const { memberCode } = await registerUser(email, password, name, birthYear);
+    // registerUser face: createUser → setDoc → signOut
+    // setDoc e garantat complet înainte de signOut
 
     showAlert(
       `🎉 Cont creat! Codul tău de membru: <strong>${memberCode}</strong><br>
@@ -112,7 +122,9 @@ document.getElementById("register-btn").addEventListener("click", async () => {
       "success"
     );
 
+    // Re-login după 2 secunde — acum documentul Firestore există garantat
     setTimeout(async () => {
+      isRegistering = false;  // ← deblocăm redirect-ul înainte de login
       try {
         await loginUser(email, password);
         // onAuthStateChanged va face redirect la game.html
@@ -122,6 +134,7 @@ document.getElementById("register-btn").addEventListener("click", async () => {
     }, 2000);
 
   } catch (err) {
+    isRegistering = false;  // ← deblocăm în caz de eroare
     const msg = err.message?.startsWith("Trebuie") ? err.message : friendlyError(err.code);
     showAlert(msg);
     setLoading(btn, false);
