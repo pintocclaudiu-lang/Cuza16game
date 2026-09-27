@@ -237,9 +237,10 @@ const HUNT_CLUES = [
 ];
 
 // ── State global ──────────────────────────────────────────────────────────────
-let currentUser = null;
-let userData    = null;
-let weekId      = null;
+let currentUser   = null;
+let userData      = null;
+let weekId        = null;
+let activeTimer   = null; // Timer global — oprit la navigare
 
 // ── Utilitare ─────────────────────────────────────────────────────────────────
 function getWeekId() {
@@ -282,9 +283,13 @@ function shuffle(arr) {
 
 // ── Citire date utilizator din Firestore ──────────────────────────────────────
 async function loadUserData(uid) {
-  const snap = await getDoc(doc(db, "users", uid));
-  if (!snap.exists()) return null;
-  return snap.data();
+  // Retry de 5 ori cu 1 secundă pauză — documentul poate să nu fie creat încă
+  for (let i = 0; i < 5; i++) {
+    const snap = await getDoc(doc(db, "users", uid));
+    if (snap.exists()) return snap.data();
+    await new Promise(r => setTimeout(r, 1000));
+  }
+  return null;
 }
 
 // ── Actualizare scoruri în header ─────────────────────────────────────────────
@@ -295,18 +300,22 @@ function updateScoreHeader(data) {
 
 // ── Adaugă puncte în Firestore ────────────────────────────────────────────────
 async function addPoints(uid, points, dayKey) {
-  const userRef = doc(db, "users", uid);
-  await updateDoc(userRef, {
-    totalWallet:     increment(points),
-    weeklyScore:     increment(points),
-    currentWeekId:   weekId,
-    lastInteractionDate: dayKey,
-    [`daysPlayed.${dayKey}`]: true,
-    weeklyInteractionsCount: increment(1),
-  });
-  userData.totalWallet  = (userData.totalWallet  || 0) + points;
-  userData.weeklyScore  = (userData.weeklyScore  || 0) + points;
-  updateScoreHeader(userData);
+  try {
+    const userRef = doc(db, "users", uid);
+    await updateDoc(userRef, {
+      totalWallet:     increment(points),
+      weeklyScore:     increment(points),
+      currentWeekId:   weekId,
+      lastInteractionDate: dayKey,
+      [`daysPlayed.${dayKey}`]: true,
+      weeklyInteractionsCount: increment(1),
+    });
+    userData.totalWallet  = (userData.totalWallet  || 0) + points;
+    userData.weeklyScore  = (userData.weeklyScore  || 0) + points;
+    updateScoreHeader(userData);
+  } catch (err) {
+    console.error("Eroare la salvarea punctelor:", err);
+  }
 }
 
 // ── Reset săptămânal dacă e săptămână nouă ────────────────────────────────────
@@ -381,8 +390,7 @@ function renderTapGame(emoji, label, dayKey) {
       Ai câștigat <span style="color:var(--gold);font-weight:700;">${pts} puncte</span>. 🎉
     `;
 
-    addPoints(currentUser.uid, pts, dayKey);
-    updateScoreHeader(userData);
+    addPoints(currentUser.uid, pts, dayKey); // async cu try/catch intern
   }
 
   function startGame() {
@@ -397,11 +405,13 @@ function renderTapGame(emoji, label, dayKey) {
     targetEl.style.pointerEvents = "auto";
     resultEl.innerHTML = "";
 
+    if (activeTimer) clearInterval(activeTimer); // Oprește timer anterior dacă există
     timerInterval = setInterval(() => {
       timeLeft--;
       timerEl.textContent = `${timeLeft}s`;
       if (timeLeft <= 0) endGame();
     }, 1000);
+    activeTimer = timerInterval;
   }
 
   startBtn.addEventListener("click", startGame);
@@ -694,16 +704,28 @@ function routeToDay() {
 // ═══════════════════════════════════════════════════════════════════════════════
 // INIȚIALIZARE
 // ═══════════════════════════════════════════════════════════════════════════════
+let initialized = false; // Previne re-inițializare la refresh token Firebase
+
 onAuthStateChanged(auth, async (user) => {
+  if (initialized) return; // Rulăm doar o dată per sesiune
   if (!user) {
     window.location.href = "index.html";
     return;
   }
+  initialized = true;
   currentUser = user;
 
   userData = await loadUserData(user.uid);
   if (!userData) {
-    window.location.href = "index.html";
+    // Nu am putut încărca datele după 5 încercări
+    document.getElementById("main-content").innerHTML = `
+      <div class="card" style="text-align:center;padding:32px;">
+        <div style="font-size:48px;margin-bottom:12px;">⚠️</div>
+        <h2>Eroare la încărcare</h2>
+        <p style="color:var(--sage);">Nu am putut încărca profilul tău. Verifică conexiunea și reîncarcă pagina.</p>
+        <button class="btn btn-primary" style="margin-top:16px;" onclick="window.location.reload()">Reîncarcă</button>
+      </div>
+    `;
     return;
   }
 
