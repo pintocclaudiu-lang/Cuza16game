@@ -420,7 +420,7 @@ function renderCatchGame(emoji, label, dayKey, splashEmoji) {
   let timeLeft    = GAME_DURATION_SEC;
   let timerInterval = null;
   let spawnInterval = null;
-  let spawnDelay    = 1200;
+  let spawnDelay    = 700;
 
   const arena   = document.getElementById("catch-arena");
   const scoreEl = document.getElementById("catch-score");
@@ -447,7 +447,7 @@ function renderCatchGame(emoji, label, dayKey, splashEmoji) {
     if (!running) return;
     const obj   = document.createElement("div");
     const left  = 8 + Math.random() * 72;
-    const speed = 2.5 + Math.random() * 2 - (combo > 2 ? 0.5 : 0);
+    const speed = 1.2 + Math.random() * 1 - (combo > 2 ? 0.3 : 0);
     const size  = 48 + Math.floor(Math.random() * 16);
 
     obj.textContent = emoji;
@@ -508,7 +508,7 @@ function renderCatchGame(emoji, label, dayKey, splashEmoji) {
       }
 
       obj.remove();
-      spawnDelay = Math.max(500, 1200 - (combo - 1) * 200 - score * 4);
+      spawnDelay = Math.max(300, 700 - (combo - 1) * 100 - score * 3);
     }
 
     obj.addEventListener("click", onTap);
@@ -552,7 +552,7 @@ function renderCatchGame(emoji, label, dayKey, splashEmoji) {
   function startGame() {
     startBtn.style.display = "none";
     score = 0; combo = 1; comboStreak = 0; running = true;
-    timeLeft = GAME_DURATION_SEC; spawnDelay = 1200;
+    timeLeft = GAME_DURATION_SEC; spawnDelay = 700;
     scoreEl.textContent = "0"; comboEl.textContent = "x1"; resultEl.innerHTML = "";
 
     requestAnimationFrame(() => requestAnimationFrame(() => { timerBar.style.width = "0%"; }));
@@ -884,8 +884,29 @@ onAuthStateChanged(auth, async (user) => {
       padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;">
       REAL
     </button>
+    <button onclick="resetTestDay()"
+      style="background:#27ae60;color:#fff;border:none;border-radius:8px;
+      padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;">
+      🔄 RESET ZI
+    </button>
   `;
   document.body.appendChild(testBar);
+
+  // Funcție reset zi curentă (pentru testare)
+  window.resetTestDay = async function() {
+    const dayKey = getDayKey();
+    try {
+      await updateDoc(doc(db, "users", currentUser.uid), {
+        [`daysPlayed.${dayKey}`]: false,
+      });
+      // Șterge și din memoria locală
+      if (userData.daysPlayed) userData.daysPlayed[dayKey] = false;
+      alert("✅ Ziua a fost resetată! Poți juca din nou.");
+      location.reload();
+    } catch(e) {
+      alert("Eroare la reset: " + e.message);
+    }
+  };
   // ── SFÂRȘIT TEST BAR ──────────────────────────────────────────────────────
 
   routeToDay();
