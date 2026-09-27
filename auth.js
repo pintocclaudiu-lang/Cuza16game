@@ -1,17 +1,14 @@
 // auth.js — BistroCuza16 Game
-// Generare cod membru C16-XXXX și creare document Firestore la înregistrare
 
 import {
   auth, db,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
-  doc, setDoc, getDoc, serverTimestamp,
+  signOut,
+  doc, setDoc, serverTimestamp,
   runTransaction
 } from "./firebase-config.js";
-
-// Flag global — previne onAuthStateChanged să redirecționeze în timpul înregistrării
-window.__registrationInProgress = false;
 
 // Generează cod secvențial C16-0001, C16-0002...
 async function generateMemberCode() {
@@ -31,45 +28,40 @@ async function generateMemberCode() {
   return newCode;
 }
 
-// Înregistrare
+// Înregistrare — returnează { user, memberCode }
 export async function registerUser(email, password, name, birthYear) {
-  const currentYear = new Date().getFullYear();
-  if (currentYear - birthYear < 16) {
-    throw new Error("Trebuie să ai cel puțin 16 ani pentru a participa.");
+  if (birthYear) {
+    const currentYear = new Date().getFullYear();
+    if (currentYear - birthYear < 16) {
+      throw new Error("Trebuie să ai cel puțin 16 ani pentru a participa.");
+    }
   }
 
-  // Blocăm redirecționarea automată până terminăm înregistrarea
-  window.__registrationInProgress = true;
+  const cred = await createUserWithEmailAndPassword(auth, email, password);
+  const memberCode = await generateMemberCode();
 
-  try {
-    const cred = await createUserWithEmailAndPassword(auth, email, password);
-    const memberCode = await generateMemberCode();
+  await setDoc(doc(db, "users", cred.user.uid), {
+    email:                  email,
+    displayName:            name,
+    memberCode:             memberCode,
+    createdAt:              serverTimestamp(),
+    birthYear:              birthYear || null,
+    totalWallet:            0,
+    weeklyScore:            0,
+    currentWeekId:          "",
+    weeklyInteractionsCount: 0,
+    hasWonRandomDraw:       false,
+    vaultOpenedThisWeek:    false,
+    lastInteractionDate:    "",
+    daysPlayed:             {},
+    vaultHistory:           {},
+    redemptions:            {}
+  });
 
-    await setDoc(doc(db, "users", cred.user.uid), {
-      email: email,
-      displayName: name,
-      memberCode: memberCode,
-      createdAt: serverTimestamp(),
-      birthYear: birthYear,
-      totalWallet: 0,
-      weeklyScore: 0,
-      currentWeekId: "",
-      weeklyInteractionsCount: 0,
-      hasWonRandomDraw: false,
-      vaultOpenedThisWeek: false,
-      lastInteractionDate: "",
-      daysPlayed: {},
-      vaultHistory: {},
-      redemptions: {}
-    });
+  // CHEIE: signOut imediat după creare — elimină loop-ul infinit
+  await signOut(auth);
 
-    window.__registrationInProgress = false;
-    return { user: cred.user, memberCode };
-
-  } catch (err) {
-    window.__registrationInProgress = false;
-    throw err;
-  }
+  return { user: cred.user, memberCode };
 }
 
 // Login
