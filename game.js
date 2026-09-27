@@ -6,8 +6,8 @@ import {
 } from "./firebase-config.js";
 
 // ── Constante ─────────────────────────────────────────────────────────────────
-const TAP_DURATION_SEC  = 15;
-const TAP_POINTS_PER_TAP = 1;
+const GAME_DURATION_SEC = 15;
+const DOUBLE_POINTS_DAY = 3; // Miercuri
 
 // ── Întrebările Quiz ──────────────────────────────────────────────────────────
 const QUIZ_QUESTIONS = [
@@ -78,12 +78,6 @@ const QUIZ_QUESTIONS = [
     explanation: "Mediterranean Bowl este un preparat de brunch, nu de mic dejun."
   },
   {
-    q: "Câte preparate de mic dejun are Cuza16 în meniu?",
-    opts: ["7", "8", "9", "10"],
-    correct: 2,
-    explanation: "Cuza16 are 9 preparate de mic dejun."
-  },
-  {
     q: "Ce tip de paste se află pe meniul Cuza16?",
     opts: ["Spaghetti Carbonara", "Penne Arrabbiata", "Fettuccine with Beef Tenderloin", "Rigatoni Bolognese"],
     correct: 2,
@@ -125,12 +119,6 @@ const QUIZ_QUESTIONS = [
     explanation: "Beef Salad costă 78 RON, în timp ce Heirloom Tomato Salad costă 49 RON."
   },
   {
-    q: "Fettuccine with Beef Tenderloin costă:",
-    opts: ["72 RON", "78 RON", "82 RON", "88 RON"],
-    correct: 2,
-    explanation: "Fettuccine with Beef Tenderloin costă 82 RON."
-  },
-  {
     q: "Care preparat include yuzu pe meniu?",
     opts: ["Turkish Eggs", "Eggs Royale Yuzu", "Avocado Toast", "Green Bowl"],
     correct: 1,
@@ -166,69 +154,17 @@ const QUIZ_QUESTIONS = [
     correct: 2,
     explanation: "Cuza16 Cafe Bistro se află în Brașov."
   },
-];
-
-// ── Indicii Scavenger Hunt ────────────────────────────────────────────────────
-const HUNT_CLUES = [
   {
-    clue: "🔍 Cuza16 își descrie filosofia printr-un motto de trei fraze. Care este primul cuvânt din motoul lor?",
-    answers: ["real"],
-    hint: "Gândește-te la autenticitate — mâncarea lor nu este artificială.",
-    explanation: "Mottoul Cuza16 începe cu \"Real\" — \"Real food • Good coffee • Slow moments\"."
+    q: "Fettuccine with Beef Tenderloin costă:",
+    opts: ["72 RON", "78 RON", "82 RON", "88 RON"],
+    correct: 2,
+    explanation: "Fettuccine with Beef Tenderloin costă 82 RON."
   },
   {
-    clue: "🔍 Cuza16 servește brunch în fiecare zi. La ce oră se deschide localul?",
-    answers: ["8", "8:00", "opt", "ora 8"],
-    hint: "Este o oră bună de dimineață — perfect pentru un mic dejun liniștit.",
-    explanation: "Cuza16 deschide la 8:00 în fiecare zi a săptămânii."
-  },
-  {
-    clue: "🔍 Ce preparat iconic se află atât în meniul de Breakfast, cât și în cel de Brunch la Cuza16?",
-    answers: ["eggs benedict", "benedict"],
-    hint: "Este un ou poșat pe pâine prăjită cu sos Hollandaise.",
-    explanation: "Eggs Benedict (60 RON) este singurul preparat care apare atât la mic dejun cât și la brunch."
-  },
-  {
-    clue: "🔍 Care este prețul celui mai scump preparat de pe meniu? Scrie doar cifra în RON.",
-    answers: ["92", "92 ron", "92 lei"],
-    hint: "Este un preparat care combină un ou cu o bucată de carne premium.",
-    explanation: "Egg and Steak costă 92 RON și este cel mai scump preparat de pe meniu."
-  },
-  {
-    clue: "🔍 Ce ingredient japonez apare în numele unui preparat exclusiv din meniul de Breakfast?",
-    answers: ["yuzu"],
-    hint: "Este un citric aromatic din Japonia, cu gust între lămâie și grepfrut.",
-    explanation: "Yuzu apare în \"Eggs Royale Yuzu\" — un preparat premium la 62 RON."
-  },
-  {
-    clue: "🔍 Cuza16 oferă un desert artizanal care combină o pâine cu banane cu o cremă de culoare verde. Cum se numește crema?",
-    answers: ["matcha", "matcha cream"],
-    hint: "Este o pudră de ceai verde japonez folosită des în patiserie.",
-    explanation: "Homemade Banana Bread and Matcha Cream (48 RON) combină pâinea cu banane cu crema de matcha."
-  },
-  {
-    clue: "🔍 Care preparat de pe meniu are origine coreeană și conține brisket și kimchi?",
-    answers: ["kimchi brisket melt", "kimchi brisket", "brisket melt"],
-    hint: "Kimchi este un ingredient fermentat tradițional coreean.",
-    explanation: "Kimchi Brisket Melt (82 RON) este preparatul fusion coreean de pe meniu."
-  },
-  {
-    clue: "🔍 Câte ore pe zi este deschis Cuza16? (de la deschidere până la închidere)",
-    answers: ["9", "nouă", "9 ore"],
-    hint: "Localul deschide la 8:00 și închide la 17:00.",
-    explanation: "Cuza16 este deschis 9 ore pe zi — de la 8:00 la 17:00."
-  },
-  {
-    clue: "🔍 Ce tip de paste mari (scurte și tubulare) se află pe meniu la Cuza16?",
-    answers: ["paccheri"],
-    hint: "Sunt paste italiene mari, asemănătoare cu rigatoni dar mai late.",
+    q: "Ce tip de paste mari (scurte și tubulare) se află pe meniu la Cuza16?",
+    opts: ["Rigatoni", "Paccheri", "Penne", "Tortiglioni"],
+    correct: 1,
     explanation: "Paccheri with Red Sauce (56 RON) este preparatul cu paste tubulare mari de pe meniu."
-  },
-  {
-    clue: "🔍 Care preparat turcesc tradițional (ouă în sos de iaurt cu unt) se găsește pe meniu?",
-    answers: ["turkish eggs", "oua turcesti", "ouă turcești"],
-    hint: "Se mai numește și Çılbır — un preparat clasic din bucătăria otomană.",
-    explanation: "Turkish Eggs (45 RON) este preparatul tradițional turcesc de pe meniu."
   },
 ];
 
@@ -254,16 +190,7 @@ function getDayKey() {
 }
 
 function getDayOfWeek() {
-  return new Date().getDay(); // 0=Duminică, 1=Luni...6=Sâmbătă
-}
-
-function showModal(content) {
-  document.getElementById("modal-sheet").innerHTML = content;
-  document.getElementById("modal-overlay").style.display = "flex";
-}
-
-function hideModal() {
-  document.getElementById("modal-overlay").style.display = "none";
+  return new Date().getDay(); // 0=Duminică,1=Luni...6=Sâmbătă
 }
 
 function shuffle(arr) {
@@ -273,6 +200,10 @@ function shuffle(arr) {
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
+}
+
+function isDoublePointsDay() {
+  return getDayOfWeek() === DOUBLE_POINTS_DAY;
 }
 
 // ── Citire date utilizator (cu retry) ────────────────────────────────────────
@@ -293,21 +224,122 @@ function updateScoreHeader(data) {
 
 // ── Adaugă puncte în Firestore ────────────────────────────────────────────────
 async function addPoints(uid, points, dayKey) {
+  const multiplier = isDoublePointsDay() ? 2 : 1;
+  const finalPts   = points * multiplier;
   try {
     await updateDoc(doc(db, "users", uid), {
-      totalWallet:             increment(points),
-      weeklyScore:             increment(points),
-      currentWeekId:           weekId,
-      lastInteractionDate:     dayKey,
+      totalWallet:              increment(finalPts),
+      weeklyScore:              increment(finalPts),
+      currentWeekId:            weekId,
+      lastInteractionDate:      dayKey,
       [`daysPlayed.${dayKey}`]: true,
-      weeklyInteractionsCount: increment(1),
+      weeklyInteractionsCount:  increment(1),
     });
-    userData.totalWallet = (userData.totalWallet || 0) + points;
-    userData.weeklyScore = (userData.weeklyScore  || 0) + points;
+    userData.totalWallet = (userData.totalWallet || 0) + finalPts;
+    userData.weeklyScore = (userData.weeklyScore  || 0) + finalPts;
+    if (!userData.daysPlayed) userData.daysPlayed = {};
+    userData.daysPlayed[dayKey] = true;
     updateScoreHeader(userData);
+    checkStreakBonus(uid);
   } catch (err) {
     console.error("Eroare la salvarea punctelor:", err);
   }
+}
+
+// ── Streak bonus ──────────────────────────────────────────────────────────────
+async function checkStreakBonus(uid) {
+  const days = userData.daysPlayed || {};
+  const playedCount = Object.keys(days).length;
+
+  // Bonusuri: 3 zile = +5, 5 zile = +15, 7 zile = +30
+  const bonusMap = { 3: 5, 5: 15, 7: 30 };
+  const bonus = bonusMap[playedCount];
+  if (!bonus) return;
+
+  const bonusKey = `streakBonusClaimed.streak_${playedCount}`;
+  if (userData[bonusKey]) return; // deja acordat
+
+  try {
+    await updateDoc(doc(db, "users", uid), {
+      totalWallet:   increment(bonus),
+      weeklyScore:   increment(bonus),
+      [bonusKey]:    true,
+    });
+    userData.totalWallet = (userData.totalWallet || 0) + bonus;
+    userData.weeklyScore = (userData.weeklyScore  || 0) + bonus;
+    userData[bonusKey]   = true;
+    updateScoreHeader(userData);
+
+    // Afișăm notificare bonus streak
+    showStreakPopup(playedCount, bonus);
+  } catch (err) {
+    console.error("Eroare streak bonus:", err);
+  }
+}
+
+function showStreakPopup(days, bonus) {
+  const labels = { 3: "3 zile la rând! 🔥", 5: "5 zile consecutiv! 🌟", 7: "Săptămână perfectă! 🏆" };
+  const popup = document.createElement("div");
+  popup.style.cssText = `
+    position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.8);
+    background:var(--charcoal);color:#fff;padding:28px 36px;border-radius:20px;
+    text-align:center;z-index:999;opacity:0;transition:all .4s cubic-bezier(.34,1.56,.64,1);
+    box-shadow:0 8px 40px rgba(0,0,0,0.3);pointer-events:none;
+  `;
+  popup.innerHTML = `
+    <div style="font-size:42px;margin-bottom:8px;">🔥</div>
+    <div style="font-size:14px;opacity:0.7;margin-bottom:4px;">STREAK BONUS</div>
+    <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;margin-bottom:4px;">${labels[days]}</div>
+    <div style="font-size:36px;font-weight:700;color:#E8C47A;">+${bonus} pct</div>
+  `;
+  document.body.appendChild(popup);
+  requestAnimationFrame(() => {
+    popup.style.opacity = "1";
+    popup.style.transform = "translate(-50%,-50%) scale(1)";
+  });
+  setTimeout(() => {
+    popup.style.opacity = "0";
+    popup.style.transform = "translate(-50%,-50%) scale(0.8)";
+    setTimeout(() => popup.remove(), 400);
+  }, 3000);
+}
+
+// ── Bara de progres streak ────────────────────────────────────────────────────
+function renderStreakBar() {
+  const days       = userData.daysPlayed || {};
+  const count      = Object.keys(days).length;
+  const isDouble   = isDoublePointsDay();
+  const container  = document.getElementById("streak-bar-wrap");
+  if (!container) return;
+
+  const pips = [1,2,3,4,5,6,7].map(n => `
+    <div style="
+      width:34px;height:34px;border-radius:50%;
+      background:${n <= count ? 'var(--charcoal)' : 'var(--sand)'};
+      color:${n <= count ? '#E8C47A' : 'var(--charcoal)'};
+      opacity:${n <= count ? '1' : '0.4'};
+      display:flex;align-items:center;justify-content:center;
+      font-size:11px;font-weight:700;
+      border:1.5px solid ${n <= count ? 'var(--charcoal)' : 'var(--sand)'};
+    ">${n}</div>
+  `).join("");
+
+  container.innerHTML = `
+    <div style="padding:16px 20px 0;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--sage);">Streak săptămânal</span>
+        <span style="font-size:11px;font-weight:600;color:var(--charcoal);opacity:0.6;">${count}/7 zile</span>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;">${pips}</div>
+      <div style="font-size:11px;color:var(--sage);margin-top:6px;">
+        ${count >= 7 ? "🏆 Săptămână perfectă! +30 pct bonus câștigat!" :
+          count >= 5 ? "🌟 5+ zile! +15 pct bonus câștigat!" :
+          count >= 3 ? "🔥 3+ zile! +5 pct bonus câștigat!" :
+          `Mai ${3 - count > 0 ? 3 - count : 0} zi${3 - count === 1 ? '' : 'le'} pentru primul bonus!`}
+      </div>
+      ${isDouble ? `<div style="background:#FFF8E7;border-radius:8px;padding:8px 12px;margin-top:8px;font-size:12px;font-weight:600;color:var(--gold);">⭐ AZI CÂȘTIGI DUBLU! Toate punctele x2</div>` : ""}
+    </div>
+  `;
 }
 
 // ── Reset săptămânal ──────────────────────────────────────────────────────────
@@ -316,10 +348,12 @@ async function checkWeeklyReset(uid, data) {
   if (data.currentWeekId && data.currentWeekId !== newWeekId) {
     try {
       await updateDoc(doc(db, "users", uid), {
-        weeklyScore:             0,
-        currentWeekId:           newWeekId,
-        weeklyInteractionsCount: 0,
-        vaultOpenedThisWeek:     false,
+        weeklyScore:              0,
+        currentWeekId:            newWeekId,
+        weeklyInteractionsCount:  0,
+        vaultOpenedThisWeek:      false,
+        daysPlayed:               {},
+        streakBonusClaimed:       {},
       });
     } catch (err) {
       console.error("Eroare la reset săptămânal:", err);
@@ -328,98 +362,239 @@ async function checkWeeklyReset(uid, data) {
     data.currentWeekId           = newWeekId;
     data.weeklyInteractionsCount = 0;
     data.vaultOpenedThisWeek     = false;
+    data.daysPlayed              = {};
+    data.streakBonusClaimed      = {};
   }
   return newWeekId;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// MINI-JOC 1: TAP-TAP
+// MINI-JOC 1: CATCH GAME (Marți = cappuccino, Joi = ouă)
 // ═══════════════════════════════════════════════════════════════════════════════
-function renderTapGame(emoji, label, dayKey) {
+function renderCatchGame(emoji, label, dayKey, splashEmoji) {
   const alreadyPlayed = userData.daysPlayed?.[dayKey] === true;
   const main = document.getElementById("main-content");
+  const double = isDoublePointsDay();
 
   main.innerHTML = `
     <div class="card">
       <p class="eyebrow">${label}</p>
-      <h1>Jocul ${label}</h1>
-      <p class="subtitle">Apasă cât mai rapid pe ${emoji} timp de ${TAP_DURATION_SEC} secunde!</p>
-      <div id="tap-area">
-        <div id="tap-target">${emoji}</div>
-        <div id="tap-count">0</div>
-        <div id="tap-timer">Pregătit?</div>
-        <div id="tap-progress"><div id="tap-progress-bar" style="width:100%;"></div></div>
-      </div>
-      <div id="tap-result"></div>
+      <h2 style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;margin-bottom:4px;">${label}</h2>
+      <p class="subtitle" style="margin-bottom:12px;">Prinde cât mai multe ${emoji} înainte să cadă! ${double ? '<strong style="color:var(--gold)">⭐ Dublu puncte azi!</strong>' : ''}</p>
       ${alreadyPlayed
         ? `<div class="played-badge">✅ Ai jucat deja azi — revino mâine!</div>`
-        : `<button class="btn btn-primary" id="tap-start-btn">Pornește jocul</button>`
+        : `
+          <div id="catch-info" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <div>
+              <span style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--sage);">Scor</span><br>
+              <span id="catch-score" style="font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:var(--gold);">0</span>
+            </div>
+            <div style="text-align:right;">
+              <span style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--sage);">Combo</span><br>
+              <span id="catch-combo" style="font-size:20px;font-weight:700;color:var(--charcoal);">x1</span>
+            </div>
+          </div>
+          <div id="catch-timer-bar-wrap" style="width:100%;height:5px;background:var(--sand);border-radius:3px;overflow:hidden;margin-bottom:8px;">
+            <div id="catch-timer-bar" style="height:100%;background:var(--gold);border-radius:3px;width:100%;transition:width ${GAME_DURATION_SEC}s linear;"></div>
+          </div>
+          <div id="catch-arena" style="
+            position:relative;width:100%;height:320px;
+            background:linear-gradient(180deg,#F7F4EF 0%,#EDE8DF 100%);
+            border-radius:16px;overflow:hidden;border:1.5px solid var(--sand);
+            cursor:pointer;touch-action:none;user-select:none;
+          "></div>
+          <div id="catch-result" style="margin-top:12px;min-height:20px;text-align:center;"></div>
+          <button class="btn btn-primary" id="catch-start-btn" style="margin-top:12px;">🎮 Pornește jocul</button>
+        `
       }
     </div>
   `;
 
   if (alreadyPlayed) return;
 
-  let tapCount     = 0;
-  let running      = false;
-  let timeLeft     = TAP_DURATION_SEC;
+  let score     = 0;
+  let combo     = 1;
+  let comboStreak = 0;
+  let running   = false;
+  let timeLeft  = GAME_DURATION_SEC;
   let timerInterval = null;
+  let spawnInterval = null;
+  let spawnDelay = 1200; // ms între obiecte — scade cu combo
+  const arena   = document.getElementById("catch-arena");
+  const scoreEl = document.getElementById("catch-score");
+  const comboEl = document.getElementById("catch-combo");
+  const resultEl = document.getElementById("catch-result");
+  const startBtn = document.getElementById("catch-start-btn");
+  const timerBar = document.getElementById("catch-timer-bar");
 
-  const targetEl = document.getElementById("tap-target");
-  const countEl  = document.getElementById("tap-count");
-  const timerEl  = document.getElementById("tap-timer");
-  const barEl    = document.getElementById("tap-progress-bar");
-  const resultEl = document.getElementById("tap-result");
-  const startBtn = document.getElementById("tap-start-btn");
+  function spawnObject() {
+    if (!running) return;
+    const obj = document.createElement("div");
+    const left = 8 + Math.random() * 72; // % din lățime
+    const speed = 2.5 + Math.random() * 2.5 - (combo > 2 ? 0.5 : 0); // sec să cadă
+    const size  = 48 + Math.floor(Math.random() * 16); // 48-64px
+    obj.textContent = emoji;
+    obj.style.cssText = `
+      position:absolute;left:${left}%;top:-60px;
+      font-size:${size}px;line-height:1;
+      cursor:pointer;user-select:none;touch-action:manipulation;
+      transition:top ${speed}s linear;
+      filter:drop-shadow(0 4px 8px rgba(0,0,0,0.15));
+    `;
+    arena.appendChild(obj);
+
+    // animație cădere
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        obj.style.top = "105%";
+      });
+    });
+
+    // click / tap pe obiect
+    function onTap(e) {
+      e.stopPropagation();
+      if (!running) return;
+      obj.removeEventListener("click", onTap);
+      obj.removeEventListener("touchstart", onTap);
+
+      comboStreak++;
+      if (comboStreak >= 3) { combo = 3; }
+      else if (comboStreak >= 2) { combo = 2; }
+      else { combo = 1; }
+
+      const pts = combo;
+      score += pts;
+      scoreEl.textContent = score;
+      comboEl.textContent = `x${combo}`;
+      comboEl.style.color = combo >= 3 ? "var(--gold)" : combo === 2 ? "#7A8C6E" : "var(--charcoal)";
+
+      // splash emoji la tap
+      const splash = document.createElement("div");
+      splash.textContent = splashEmoji || "💥";
+      const rect = obj.getBoundingClientRect();
+      const arenaRect = arena.getBoundingClientRect();
+      splash.style.cssText = `
+        position:absolute;
+        left:${rect.left - arenaRect.left + rect.width/2 - 20}px;
+        top:${rect.top  - arenaRect.top  + rect.height/2 - 20}px;
+        font-size:40px;pointer-events:none;
+        animation:splashAnim 0.4s ease forwards;
+        z-index:10;
+      `;
+      arena.appendChild(splash);
+      setTimeout(() => splash.remove(), 400);
+
+      // combo badge
+      if (combo > 1) {
+        const badge = document.createElement("div");
+        badge.textContent = combo === 3 ? "🔥 x3 COMBO!" : "⚡ x2";
+        badge.style.cssText = `
+          position:absolute;
+          left:${rect.left - arenaRect.left}px;
+          top:${rect.top  - arenaRect.top  - 24}px;
+          font-size:13px;font-weight:700;
+          color:${combo >= 3 ? "var(--gold)" : "var(--sage)"};
+          pointer-events:none;
+          animation:floatUp 0.6s ease forwards;
+          z-index:11;white-space:nowrap;
+        `;
+        arena.appendChild(badge);
+        setTimeout(() => badge.remove(), 600);
+      }
+
+      obj.remove();
+
+      // velocitate crescută la combo
+      spawnDelay = Math.max(500, 1200 - (combo - 1) * 200 - score * 4);
+    }
+
+    obj.addEventListener("click", onTap);
+    obj.addEventListener("touchstart", onTap, { passive: true });
+
+    // obiectul a ajuns jos fără să fie prins — reset combo
+    const fallTimeout = setTimeout(() => {
+      if (obj.parentNode) {
+        obj.remove();
+        comboStreak = 0;
+        combo = 1;
+        comboEl.textContent = "x1";
+        comboEl.style.color = "var(--charcoal)";
+      }
+    }, speed * 1000 + 200);
+
+    obj._fallTimeout = fallTimeout;
+  }
+
+  function startSpawning() {
+    spawnObject();
+    spawnInterval = setInterval(() => {
+      if (!running) return;
+      spawnObject();
+      // re-schedule cu delay curent
+      clearInterval(spawnInterval);
+      if (running) {
+        spawnInterval = setInterval(() => { if (running) spawnObject(); }, spawnDelay);
+      }
+    }, spawnDelay);
+  }
 
   function endGame() {
     running = false;
     clearInterval(timerInterval);
+    clearInterval(spawnInterval);
     activeTimer = null;
-    targetEl.style.pointerEvents = "none";
-    timerEl.textContent = "Timp expirat!";
-    barEl.style.width   = "0%";
+    // ridicăm toate obiectele rămase
+    arena.querySelectorAll("div").forEach(el => el.remove());
 
-    const pts = Math.max(tapCount * TAP_POINTS_PER_TAP, 5);
+    const finalPts = Math.max(score, 5);
+    const multi    = isDoublePointsDay() ? " (x2 azi!)" : "";
     resultEl.innerHTML = `
-      <strong>Ai apăsat de ${tapCount} ori!</strong><br>
-      Ai câștigat <span style="color:var(--gold);font-weight:700;">${pts} puncte</span>. 🎉
+      <strong>Ai prins ${score} ${emoji}!</strong><br>
+      Ai câștigat <span style="color:var(--gold);font-weight:700;">${finalPts} puncte</span>${multi} 🎉
     `;
-    addPoints(currentUser.uid, pts, dayKey);
+    addPoints(currentUser.uid, finalPts, dayKey);
   }
 
   function startGame() {
     startBtn.style.display = "none";
-    tapCount  = 0;
-    timeLeft  = TAP_DURATION_SEC;
-    running   = true;
-    countEl.textContent          = "0";
-    timerEl.textContent          = `${timeLeft}s`;
-    barEl.style.transition       = `width ${TAP_DURATION_SEC}s linear`;
-    barEl.style.width            = "0%";
-    targetEl.style.pointerEvents = "auto";
-    resultEl.innerHTML           = "";
+    score = 0; combo = 1; comboStreak = 0; running = true;
+    timeLeft = GAME_DURATION_SEC;
+    spawnDelay = 1200;
+    scoreEl.textContent = "0";
+    comboEl.textContent = "x1";
+    resultEl.innerHTML  = "";
 
-    if (activeTimer) clearInterval(activeTimer);
+    // pornire timer bar
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        timerBar.style.width = "0%";
+      });
+    });
+
     timerInterval = setInterval(() => {
       timeLeft--;
-      timerEl.textContent = `${timeLeft}s`;
       if (timeLeft <= 0) endGame();
     }, 1000);
     activeTimer = timerInterval;
+
+    startSpawning();
   }
 
-  startBtn.addEventListener("click", startGame);
+  // CSS animații inline
+  const style = document.createElement("style");
+  style.textContent = `
+    @keyframes splashAnim {
+      0%   { transform:scale(0.5); opacity:1; }
+      100% { transform:scale(1.8); opacity:0; }
+    }
+    @keyframes floatUp {
+      0%   { transform:translateY(0); opacity:1; }
+      100% { transform:translateY(-40px); opacity:0; }
+    }
+  `;
+  document.head.appendChild(style);
 
-  targetEl.addEventListener("click", () => {
-    if (!running) return;
-    tapCount++;
-    countEl.textContent = tapCount;
-    targetEl.classList.remove("pop");
-    void targetEl.offsetWidth;
-    targetEl.classList.add("pop");
-    setTimeout(() => targetEl.classList.remove("pop"), 150);
-  });
+  startBtn.addEventListener("click", startGame);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -428,21 +603,22 @@ function renderTapGame(emoji, label, dayKey) {
 function renderQuiz(dayKey) {
   const alreadyPlayed = userData.daysPlayed?.[dayKey] === true;
   const main = document.getElementById("main-content");
+  const double = isDoublePointsDay();
 
   if (alreadyPlayed) {
     main.innerHTML = `
       <div class="card">
         <p class="eyebrow">Provocarea Zilei</p>
-        <h1>Quiz BistroCuza16</h1>
+        <h2 style="font-family:'Playfair Display',serif;">Quiz BistroCuza16</h2>
         <div class="played-badge" style="margin-top:12px;">✅ Ai răspuns la quiz azi — revino mâine!</div>
       </div>
     `;
     return;
   }
 
-  const selected  = shuffle(QUIZ_QUESTIONS).slice(0, 5);
-  let currentIdx  = 0;
-  let totalPts    = 0;
+  const selected = shuffle(QUIZ_QUESTIONS).slice(0, 5);
+  let currentIdx = 0;
+  let totalPts   = 0;
 
   function renderQuestion() {
     const q = selected[currentIdx];
@@ -452,7 +628,7 @@ function renderQuiz(dayKey) {
 
     main.innerHTML = `
       <div class="card">
-        <p class="eyebrow">Întrebarea ${currentIdx + 1} din ${selected.length}</p>
+        <p class="eyebrow">Întrebarea ${currentIdx + 1} din ${selected.length}${double ? ' · ⭐ Dublu puncte!' : ''}</p>
         <div class="quiz-question">${q.q}</div>
         <div class="quiz-options">${optHtml}</div>
         <div id="quiz-feedback"></div>
@@ -478,7 +654,7 @@ function renderQuiz(dayKey) {
 
         document.getElementById("quiz-feedback").innerHTML = `
           ${correct ? "✅ <strong>Corect!</strong>" : "❌ <strong>Răspuns greșit.</strong>"}
-          +${pts} puncte<br>
+          +${pts} puncte${double ? ' (x2 se aplică la final)' : ''}<br>
           <span style="color:var(--sage);font-size:13px;">${q.explanation}</span>
         `;
         document.getElementById("quiz-next-btn").style.display = "block";
@@ -491,12 +667,14 @@ function renderQuiz(dayKey) {
         renderQuestion();
       } else {
         addPoints(currentUser.uid, totalPts, dayKey);
+        const finalDisplay = double ? totalPts * 2 : totalPts;
         main.innerHTML = `
           <div class="card" style="text-align:center;">
             <div style="font-size:56px;margin-bottom:12px;">🎯</div>
             <p class="eyebrow">Quiz completat!</p>
-            <h1>Felicitări!</h1>
-            <p class="subtitle">Ai obținut <strong style="color:var(--gold)">${totalPts} puncte</strong> din ${selected.length * 10} posibile.</p>
+            <h2 style="font-family:'Playfair Display',serif;">Felicitări!</h2>
+            <p class="subtitle">Ai obținut <strong style="color:var(--gold)">${finalDisplay} puncte</strong> din ${selected.length * (double ? 20 : 10)} posibile.</p>
+            ${double ? `<p style="font-size:13px;color:var(--gold);font-weight:600;">⭐ Dublu puncte aplicat!</p>` : ""}
             <p style="font-size:13px;color:var(--sage);margin-top:12px;">Revino mâine pentru o nouă provocare!</p>
           </div>
         `;
@@ -508,106 +686,120 @@ function renderQuiz(dayKey) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// MINI-JOC 3: SCAVENGER HUNT
+// MINI-JOC 3: STAFF / MENU HUNT (Sâmbătă & Duminică)
+// Întrebarea vine din Firestore: config/weeklyHunt
 // ═══════════════════════════════════════════════════════════════════════════════
-function renderScavengerHunt(dayKey) {
+async function renderWeeklyHunt(dayKey, isMenuDay) {
   const alreadyPlayed = userData.daysPlayed?.[dayKey] === true;
   const main = document.getElementById("main-content");
+
+  // Titlu și icon diferit sâmbătă vs duminică
+  const title = isMenuDay ? "Menu Hunt 🍽️" : "Staff Hunt 🕵️";
+  const eyebrow = isMenuDay ? "Vânătoarea de meniu" : "Vânătoarea de personal";
 
   if (alreadyPlayed) {
     main.innerHTML = `
       <div class="card">
-        <p class="eyebrow">Scavenger Hunt</p>
-        <h1>Vânătoarea de indicii</h1>
-        <div class="played-badge" style="margin-top:12px;">✅ Ai jucat Scavenger Hunt azi — revino mâine!</div>
+        <p class="eyebrow">${eyebrow}</p>
+        <h2 style="font-family:'Playfair Display',serif;">${title}</h2>
+        <div class="played-badge" style="margin-top:12px;">✅ Ai jucat azi — revino ${isMenuDay ? 'luni' : 'mâine'}!</div>
       </div>
     `;
     return;
   }
 
-  const selected = shuffle(HUNT_CLUES).slice(0, 3);
-  let currentIdx = 0;
-  let totalPts   = 0;
-  let hints      = 0;
+  // Afișăm loading
+  main.innerHTML = `
+    <div class="card">
+      <p class="eyebrow">${eyebrow}</p>
+      <h2 style="font-family:'Playfair Display',serif;">${title}</h2>
+      <p style="color:var(--sage);font-size:14px;margin-top:8px;">Se încarcă provocarea săptămânii...</p>
+    </div>
+  `;
 
-  function renderClue() {
-    const clue = selected[currentIdx];
-    hints = 0;
-
-    main.innerHTML = `
-      <div class="card">
-        <p class="eyebrow">Indiciu ${currentIdx + 1} din ${selected.length}</p>
-        <div class="hunt-clue">${clue.clue}</div>
-        <div class="hunt-answer-wrap">
-          <input type="text" id="hunt-answer" placeholder="Scrie răspunsul..." autocomplete="off">
-        </div>
-        <button class="btn btn-secondary" id="hunt-hint-btn" style="margin-top:10px;width:100%;">💡 Arată indiciu (−2 pct)</button>
-        <button class="btn btn-primary" id="hunt-submit-btn">Trimite răspunsul</button>
-        <div id="hunt-feedback"></div>
-        <button class="btn btn-primary" id="hunt-next-btn" style="display:none;">
-          ${currentIdx < selected.length - 1 ? "Următorul indiciu →" : "Finalizează vânătoarea"}
-        </button>
-      </div>
-    `;
-
-    const answerInput = document.getElementById("hunt-answer");
-    const feedbackEl  = document.getElementById("hunt-feedback");
-    const nextBtn     = document.getElementById("hunt-next-btn");
-    const submitBtn   = document.getElementById("hunt-submit-btn");
-    const hintBtn     = document.getElementById("hunt-hint-btn");
-    let answered = false;
-
-    hintBtn.addEventListener("click", () => {
-      if (answered || hints > 0) return;
-      hints++;
-      hintBtn.disabled    = true;
-      hintBtn.textContent = `💡 ${clue.hint}`;
-      hintBtn.style.background = "#FFF8E7";
-      hintBtn.style.color      = "var(--charcoal)";
-    });
-
-    function submitAnswer() {
-      if (answered) return;
-      const raw     = answerInput.value.trim().toLowerCase();
-      const correct = clue.answers.some(a => raw === a.toLowerCase() || raw.includes(a.toLowerCase()));
-      answered = true;
-      submitBtn.disabled   = true;
-      answerInput.disabled = true;
-
-      const pts = correct ? Math.max(15 - hints * 2, 5) : 3;
-      totalPts += pts;
-
-      feedbackEl.innerHTML = `
-        ${correct ? "✅ <strong>Răspuns corect!</strong>" : "❌ <strong>Răspuns greșit.</strong>"}
-        +${pts} puncte<br>
-        <span style="color:var(--sage);font-size:13px;">${clue.explanation}</span>
-      `;
-      nextBtn.style.display = "block";
-    }
-
-    submitBtn.addEventListener("click", submitAnswer);
-    answerInput.addEventListener("keydown", e => { if (e.key === "Enter") submitAnswer(); });
-
-    nextBtn.addEventListener("click", () => {
-      currentIdx++;
-      if (currentIdx < selected.length) {
-        renderClue();
-      } else {
-        addPoints(currentUser.uid, totalPts, dayKey);
-        main.innerHTML = `
-          <div class="card" style="text-align:center;">
-            <div style="font-size:56px;margin-bottom:12px;">🔍</div>
-            <p class="eyebrow">Scavenger Hunt completat!</p>
-            <h1>Excelent!</h1>
-            <p class="subtitle">Ai obținut <strong style="color:var(--gold)">${totalPts} puncte</strong> din această vânătoare de indicii!</p>
-            <p style="font-size:13px;color:var(--sage);margin-top:12px;">Revino mâine pentru o nouă provocare!</p>
-          </div>
-        `;
-      }
-    });
+  // Citim întrebarea din Firestore
+  let huntData = null;
+  try {
+    const huntKey = isMenuDay ? "menuHunt" : "staffHunt";
+    const snap = await getDoc(doc(db, "config", huntKey));
+    if (snap.exists()) huntData = snap.data();
+  } catch (err) {
+    console.error("Eroare la citirea hunt:", err);
   }
 
-  renderClue();
+  // Fallback dacă admin nu a setat întrebarea
+  if (!huntData || !huntData.question) {
+    main.innerHTML = `
+      <div class="card" style="text-align:center;">
+        <p class="eyebrow">${eyebrow}</p>
+        <div style="font-size:48px;margin:16px 0;">⏳</div>
+        <h2 style="font-family:'Playfair Display',serif;">${title}</h2>
+        <p style="color:var(--sage);font-size:14px;line-height:1.6;margin-top:8px;">
+          Provocarea de azi nu a fost setată încă.<br>
+          Revino mai târziu sau întreabă echipa Cuza16!
+        </p>
+      </div>
+    `;
+    return;
+  }
+
+  // Afișăm întrebarea
+  main.innerHTML = `
+    <div class="card">
+      <p class="eyebrow">${eyebrow}</p>
+      <h2 style="font-family:'Playfair Display',serif;margin-bottom:6px;">${title}</h2>
+      ${isMenuDay
+        ? `<p style="font-size:13px;color:var(--sage);line-height:1.5;margin-bottom:16px;">🍽️ Uită-te la meniu sau întreabă ospătarul pentru a găsi răspunsul!</p>`
+        : `<p style="font-size:13px;color:var(--sage);line-height:1.5;margin-bottom:16px;">🕵️ Privește în jur în local pentru a găsi răspunsul!</p>`
+      }
+      <div class="hunt-clue">${huntData.question}</div>
+      ${huntData.hint ? `
+        <div style="background:#FFF8E7;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:var(--charcoal);line-height:1.5;">
+          💡 <strong>Indiciu:</strong> ${huntData.hint}
+        </div>
+      ` : ""}
+      <div class="hunt-answer-wrap">
+        <input type="text" id="hunt-answer" placeholder="Scrie răspunsul aici..." autocomplete="off">
+      </div>
+      <button class="btn btn-primary" id="hunt-submit-btn" style="margin-top:10px;">Trimite răspunsul</button>
+      <div id="hunt-feedback" style="margin-top:12px;min-height:20px;"></div>
+    </div>
+  `;
+
+  const answerInput = document.getElementById("hunt-answer");
+  const feedbackEl  = document.getElementById("hunt-feedback");
+  const submitBtn   = document.getElementById("hunt-submit-btn");
+  let answered = false;
+
+  function submitAnswer() {
+    if (answered) return;
+    const raw = answerInput.value.trim().toLowerCase();
+    if (!raw) { feedbackEl.innerHTML = `<span style="color:var(--red);">Scrie un răspuns înainte să trimiți.</span>`; return; }
+
+    // Verificăm răspunsul — acceptăm mai multe variante corecte
+    const correctAnswers = (huntData.answers || [huntData.answer || ""]).map(a => a.toLowerCase().trim());
+    const isCorrect = correctAnswers.some(a => raw === a || raw.includes(a) || a.includes(raw));
+
+    answered = true;
+    submitBtn.disabled   = true;
+    answerInput.disabled = true;
+
+    const pts = isCorrect ? 20 : 5;
+
+    feedbackEl.innerHTML = `
+      ${isCorrect
+        ? `✅ <strong>Corect! Bravo!</strong> +${pts} puncte 🎉`
+        : `❌ <strong>Răspuns incorect.</strong> +${pts} puncte pentru participare.<br>
+           <span style="font-size:13px;color:var(--sage);">Răspunsul corect era: <strong>${huntData.answers?.[0] || huntData.answer || "—"}</strong></span>`
+      }<br>
+      <span style="font-size:13px;color:var(--sage);margin-top:4px;display:block;">${huntData.explanation || ""}</span>
+    `;
+
+    addPoints(currentUser.uid, pts, dayKey);
+  }
+
+  submitBtn.addEventListener("click", submitAnswer);
+  answerInput.addEventListener("keydown", e => { if (e.key === "Enter") submitAnswer(); });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -616,33 +808,37 @@ function renderScavengerHunt(dayKey) {
 function renderMondayVaultPreview() {
   const main = document.getElementById("main-content");
   const alreadyOpened = userData.vaultOpenedThisWeek === true;
+  const days  = Object.keys(userData.daysPlayed || {}).length;
 
   main.innerHTML = `
     <div class="card" style="text-align:center;">
       <p class="eyebrow">Este Luni!</p>
-      <h1>Ziua Vault-ului 🔐</h1>
+      <h2 style="font-family:'Playfair Display',serif;margin-bottom:6px;">Ziua Vault-ului 🔐</h2>
       <p class="subtitle">
         ${alreadyOpened
           ? "Ai deschis deja vault-ul această săptămână. Revino săptămâna viitoare!"
-          : "Astăzi poți deschide Vault-ul și câștiga o recompensă secretă. Mergi la secțiunea Vault!"
+          : "Astăzi poți deschide Vault-ul și câștiga o recompensă secretă!"
         }
       </p>
       ${alreadyOpened
         ? `<div class="played-badge" style="margin-top:16px;">🔓 Vault deschis această săptămână</div>`
-        : `<a href="vault.html" class="btn btn-primary" style="display:block;text-align:center;text-decoration:none;margin-top:20px;">Deschide Vault-ul →</a>`
+        : `<a href="vault.html" class="btn btn-gold" style="display:block;text-align:center;text-decoration:none;margin-top:20px;">Deschide Vault-ul →</a>`
       }
     </div>
     <div class="card">
-      <p class="eyebrow">Scoruri săptămâna aceasta</p>
-      <h1>Sumarul tău</h1>
-      <div style="display:flex;gap:16px;margin-top:4px;">
-        <div style="flex:1;text-align:center;padding:16px;background:var(--sand);border-radius:12px;">
-          <div style="font-size:28px;font-weight:700;color:var(--gold);">${userData.totalWallet || 0}</div>
-          <div style="font-size:11px;color:var(--sage);margin-top:4px;">Total Portofel</div>
+      <p class="eyebrow" style="margin-bottom:10px;">Sumarul tău săptămânal</p>
+      <div style="display:flex;gap:12px;">
+        <div style="flex:1;text-align:center;padding:14px;background:var(--sand);border-radius:12px;">
+          <div style="font-size:26px;font-weight:700;color:var(--gold);font-family:'Playfair Display',serif;">${userData.totalWallet || 0}</div>
+          <div style="font-size:10px;color:var(--sage);margin-top:4px;text-transform:uppercase;letter-spacing:1px;">Total Portofel</div>
         </div>
-        <div style="flex:1;text-align:center;padding:16px;background:var(--sand);border-radius:12px;">
-          <div style="font-size:28px;font-weight:700;color:var(--gold);">${userData.weeklyScore || 0}</div>
-          <div style="font-size:11px;color:var(--sage);margin-top:4px;">Scor Săptămânal</div>
+        <div style="flex:1;text-align:center;padding:14px;background:var(--sand);border-radius:12px;">
+          <div style="font-size:26px;font-weight:700;color:var(--gold);font-family:'Playfair Display',serif;">${userData.weeklyScore || 0}</div>
+          <div style="font-size:10px;color:var(--sage);margin-top:4px;text-transform:uppercase;letter-spacing:1px;">Scor Săptămânal</div>
+        </div>
+        <div style="flex:1;text-align:center;padding:14px;background:var(--sand);border-radius:12px;">
+          <div style="font-size:26px;font-weight:700;color:var(--gold);font-family:'Playfair Display',serif;">${days}</div>
+          <div style="font-size:10px;color:var(--sage);margin-top:4px;text-transform:uppercase;letter-spacing:1px;">Zile Jucate</div>
         </div>
       </div>
     </div>
@@ -659,17 +855,34 @@ function routeToDay() {
   document.getElementById("loading-state")?.remove();
 
   switch (day) {
-    case 1: renderMondayVaultPreview();                    break; // Luni
-    case 2: renderTapGame("☕", "Cappuccino Tap", dayKey); break; // Marți
-    case 3: renderQuiz(dayKey);                            break; // Miercuri
-    case 4: renderTapGame("🍳", "Ouă Benedict Tap", dayKey); break; // Joi
-    case 5: renderScavengerHunt(dayKey);                   break; // Vineri
-    case 6: renderQuiz(dayKey);                            break; // Sâmbătă
-    case 0: renderQuiz(dayKey);                            break; // Duminică
+    case 1: // Luni
+      renderMondayVaultPreview();
+      break;
+    case 2: // Marți — Catch Cappuccino
+      renderCatchGame("☕", "Prinde Cappuccino-urile! ☕", dayKey, "💦");
+      break;
+    case 3: // Miercuri — Quiz (DOUBLE POINTS)
+      renderQuiz(dayKey);
+      break;
+    case 4: // Joi — Catch Ouă
+      renderCatchGame("🥚", "Sparge Ouăle! 🥚", dayKey, "🍳");
+      break;
+    case 5: // Vineri — Quiz
+      renderQuiz(dayKey);
+      break;
+    case 6: // Sâmbătă — Staff Hunt
+      renderWeeklyHunt(dayKey, false);
+      break;
+    case 0: // Duminică — Menu Hunt
+      renderWeeklyHunt(dayKey, true);
+      break;
     default:
       document.getElementById("main-content").innerHTML =
-        `<div class="card"><p>Zi necunoscută — revino în curând!</p></div>`;
+        `<div class="card"><p>Revino în curând!</p></div>`;
   }
+
+  // Streak bar sub joc
+  setTimeout(renderStreakBar, 100);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
