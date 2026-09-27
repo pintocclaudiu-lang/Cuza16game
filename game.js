@@ -1,6 +1,4 @@
 // game.js — BistroCuza16 Game
-// Jocul zilnic: Luni=Vault preview, Marți=Cappuccino Tap, Miercuri=Quiz,
-// Joi=Ouă Benedict Tap, Vineri=Scavenger Hunt, Sâmbătă=Quiz, Duminică=Quiz
 
 import {
   auth, db, onAuthStateChanged, signOut,
@@ -8,12 +6,11 @@ import {
 } from "./firebase-config.js";
 
 // ── Constante ─────────────────────────────────────────────────────────────────
-const TAP_DURATION_SEC = 15;  // secunde joc Tap-Tap
+const TAP_DURATION_SEC  = 15;
 const TAP_POINTS_PER_TAP = 1;
 
-// ── Întrebările Quiz – bazate pe meniul și identitatea BistroCuza16 ──────────
+// ── Întrebările Quiz ──────────────────────────────────────────────────────────
 const QUIZ_QUESTIONS = [
-  // MENIU — prețuri
   {
     q: "Care este prețul preparatului \"Eggs Benedict\" de pe meniu?",
     opts: ["52 RON", "55 RON", "60 RON", "65 RON"],
@@ -24,19 +21,19 @@ const QUIZ_QUESTIONS = [
     q: "Ce preparat costă 92 RON în meniul Cuza16?",
     opts: ["Fettuccine with Beef Tenderloin", "Egg and Steak", "Kimchi Brisket Melt", "Smoked Eggplant Bowl"],
     correct: 1,
-    explanation: "Egg and Steak este cel mai scump preparat din meniu, la 92 RON — o combinație premium de ou și friptură."
+    explanation: "Egg and Steak este cel mai scump preparat din meniu, la 92 RON."
   },
   {
     q: "Cât costă Avocado Toast la Cuza16?",
     opts: ["42 RON", "49 RON", "52 RON", "55 RON"],
     correct: 3,
-    explanation: "Avocado Toast se află la 55 RON, disponibil atât la mic dejun cât și la brunch."
+    explanation: "Avocado Toast se află la 55 RON."
   },
   {
     q: "Care este prețul Granola Bowl?",
     opts: ["35 RON", "38 RON", "42 RON", "46 RON"],
     correct: 2,
-    explanation: "Granola Bowl costă 42 RON și este o opțiune ușoară și sănătoasă pentru mic dejun."
+    explanation: "Granola Bowl costă 42 RON."
   },
   {
     q: "Kimchi Brisket Melt costă:",
@@ -48,13 +45,13 @@ const QUIZ_QUESTIONS = [
     q: "Care este prețul Acai Bowl?",
     opts: ["38 RON", "42 RON", "46 RON", "52 RON"],
     correct: 2,
-    explanation: "Acai Bowl costă 46 RON și este una dintre opțiunile premium de mic dejun."
+    explanation: "Acai Bowl costă 46 RON."
   },
   {
     q: "Corn Ribs costă:",
     opts: ["19 RON", "22 RON", "26 RON", "29 RON"],
     correct: 2,
-    explanation: "Corn Ribs costă 26 RON și este cel mai accesibil preparat din meniul de brunch."
+    explanation: "Corn Ribs costă 26 RON."
   },
   {
     q: "\"Eggs Royale Yuzu\" costă:",
@@ -66,26 +63,25 @@ const QUIZ_QUESTIONS = [
     q: "Cât costă Banana Bread cu Matcha Cream la desert?",
     opts: ["38 RON", "42 RON", "45 RON", "48 RON"],
     correct: 3,
-    explanation: "Homemade Banana Bread and Matcha Cream costă 48 RON — un desert artizanal special."
+    explanation: "Homemade Banana Bread and Matcha Cream costă 48 RON."
   },
   {
     q: "Turkish Eggs din meniu costă:",
     opts: ["38 RON", "42 RON", "45 RON", "49 RON"],
     correct: 2,
-    explanation: "Turkish Eggs costă 45 RON — un preparat inspirat din bucătăria turcească tradițională."
+    explanation: "Turkish Eggs costă 45 RON."
   },
-  // MENIU — preparate și categorie
   {
     q: "Care dintre aceste preparate NU se află pe meniul de mic dejun al Cuza16?",
     opts: ["French Toast", "Mediterranean Bowl", "Soft Scramble Toast", "Mushroom Toast"],
     correct: 1,
-    explanation: "Mediterranean Bowl este un preparat de brunch, nu de mic dejun. French Toast, Soft Scramble Toast și Mushroom Toast sunt toate la mic dejun."
+    explanation: "Mediterranean Bowl este un preparat de brunch, nu de mic dejun."
   },
   {
     q: "Câte preparate de mic dejun are Cuza16 în meniu?",
     opts: ["7", "8", "9", "10"],
     correct: 2,
-    explanation: "Cuza16 are 9 preparate de mic dejun: French Toast, Granola Bowl, Acai Bowl, Eggs Benedict, Eggs Royale Yuzu, Soft Scramble Toast, Avocado Toast, Mushroom Toast și Turkish Eggs."
+    explanation: "Cuza16 are 9 preparate de mic dejun."
   },
   {
     q: "Ce tip de paste se află pe meniul Cuza16?",
@@ -102,77 +98,77 @@ const QUIZ_QUESTIONS = [
       "Honest food • Fine coffee • Good moments"
     ],
     correct: 1,
-    explanation: "Mottoul Cuza16 este \"Real food • Good coffee • Slow moments\" — reflectând filosofia lor de a savura momentele în liniște."
+    explanation: "Mottoul Cuza16 este \"Real food • Good coffee • Slow moments\"."
   },
   {
     q: "La ce oră se deschide Cuza16 în fiecare zi?",
     opts: ["7:00", "8:00", "9:00", "10:00"],
     correct: 1,
-    explanation: "Cuza16 se deschide la 8:00 în fiecare zi a săptămânii, inclusiv weekenduri."
+    explanation: "Cuza16 se deschide la 8:00 în fiecare zi."
   },
   {
     q: "Până la ce oră este deschis Cuza16?",
     opts: ["15:00", "16:00", "17:00", "18:00"],
     correct: 2,
-    explanation: "Cuza16 se închide la 17:00 în fiecare zi — un orar tipic pentru un brunch cafe."
+    explanation: "Cuza16 se închide la 17:00 în fiecare zi."
   },
   {
     q: "Paccheri with Red Sauce din meniu costă:",
     opts: ["48 RON", "52 RON", "56 RON", "62 RON"],
     correct: 2,
-    explanation: "Paccheri with Red Sauce costă 56 RON — un preparat italian clasic disponibil la brunch."
+    explanation: "Paccheri with Red Sauce costă 56 RON."
   },
   {
     q: "Care salată costă mai mult pe meniul Cuza16?",
     opts: ["Heirloom Tomato Salad", "Beef Salad", "Ambele costă la fel", "Nu există salate în meniu"],
     correct: 1,
-    explanation: "Beef Salad costă 78 RON, în timp ce Heirloom Tomato Salad costă 49 RON. Salata de vită este mai scumpă cu 29 RON."
+    explanation: "Beef Salad costă 78 RON, în timp ce Heirloom Tomato Salad costă 49 RON."
   },
   {
     q: "Fettuccine with Beef Tenderloin costă:",
     opts: ["72 RON", "78 RON", "82 RON", "88 RON"],
     correct: 2,
-    explanation: "Fettuccine with Beef Tenderloin costă 82 RON — același preț ca și Kimchi Brisket Melt."
+    explanation: "Fettuccine with Beef Tenderloin costă 82 RON."
   },
   {
     q: "Care preparat include yuzu pe meniu?",
     opts: ["Turkish Eggs", "Eggs Royale Yuzu", "Avocado Toast", "Green Bowl"],
     correct: 1,
-    explanation: "Eggs Royale Yuzu (62 RON) este singurul preparat care include yuzu — un citric japonez cu aromă unică."
+    explanation: "Eggs Royale Yuzu (62 RON) este singurul preparat care include yuzu."
   },
   {
     q: "Soft Scramble Toast costă:",
     opts: ["52 RON", "55 RON", "59 RON", "62 RON"],
     correct: 2,
-    explanation: "Soft Scramble Toast costă 59 RON — ouă moi de calitate pe toast artizanal."
+    explanation: "Soft Scramble Toast costă 59 RON."
   },
   {
     q: "Care este cel mai ieftin preparat din categoria Breakfast?",
     opts: ["Mushroom Toast (52 RON)", "Granola Bowl (42 RON)", "Acai Bowl (46 RON)", "Turkish Eggs (45 RON)"],
     correct: 1,
-    explanation: "Granola Bowl la 42 RON este cel mai accesibil preparat de mic dejun de pe meniu."
+    explanation: "Granola Bowl la 42 RON este cel mai accesibil preparat de mic dejun."
   },
   {
     q: "Green Bowl costă:",
     opts: ["42 RON", "45 RON", "49 RON", "52 RON"],
     correct: 2,
-    explanation: "Green Bowl costă 49 RON și este un preparat de brunch ușor și sănătos."
+    explanation: "Green Bowl costă 49 RON."
   },
   {
     q: "French Toast din meniu costă:",
     opts: ["48 RON", "52 RON", "55 RON", "58 RON"],
     correct: 2,
-    explanation: "French Toast costă 55 RON la Cuza16 — același preț cu Avocado Toast."
+    explanation: "French Toast costă 55 RON la Cuza16."
   },
   {
     q: "Cuza16 se află în:",
     opts: ["Cluj-Napoca", "București", "Brașov", "Sibiu"],
     correct: 2,
-    explanation: "Cuza16 Cafe Bistro se află în Brașov — unul dintre cele mai frumoase orașe din Transilvania."
+    explanation: "Cuza16 Cafe Bistro se află în Brașov."
   },
 ];
 
-// ── Indicii Scavenger Hunt – despre BistroCuza16 ──────────────────────────────
+// ── Indicii Scavenger Hunt ────────────────────────────────────────────────────
 const HUNT_CLUES = [
   {
     clue: "🔍 Cuza16 își descrie filosofia printr-un motto de trei fraze. Care este primul cuvânt din motoul lor?",
@@ -187,7 +183,7 @@ const HUNT_CLUES = [
     explanation: "Cuza16 deschide la 8:00 în fiecare zi a săptămânii."
   },
   {
-    clue: "🔍 Ce preparat iconic de origin olandezo-canadian se află atât în meniul de Breakfast, cât și în cel de Brunch la Cuza16?",
+    clue: "🔍 Ce preparat iconic se află atât în meniul de Breakfast, cât și în cel de Brunch la Cuza16?",
     answers: ["eggs benedict", "benedict"],
     hint: "Este un ou poșat pe pâine prăjită cu sos Hollandaise.",
     explanation: "Eggs Benedict (60 RON) este singurul preparat care apare atât la mic dejun cât și la brunch."
@@ -211,7 +207,7 @@ const HUNT_CLUES = [
     explanation: "Homemade Banana Bread and Matcha Cream (48 RON) combină pâinea cu banane cu crema de matcha."
   },
   {
-    clue: "🔍 Care preparat de pe meniu are origine coreeană și conține brisket (piept de vită) și kimchi?",
+    clue: "🔍 Care preparat de pe meniu are origine coreeană și conține brisket și kimchi?",
     answers: ["kimchi brisket melt", "kimchi brisket", "brisket melt"],
     hint: "Kimchi este un ingredient fermentat tradițional coreean.",
     explanation: "Kimchi Brisket Melt (82 RON) este preparatul fusion coreean de pe meniu."
@@ -237,29 +233,27 @@ const HUNT_CLUES = [
 ];
 
 // ── State global ──────────────────────────────────────────────────────────────
-let currentUser   = null;
-let userData      = null;
-let weekId        = null;
-let activeTimer   = null; // Timer global — oprit la navigare
+let currentUser = null;
+let userData    = null;
+let weekId      = null;
+let activeTimer = null;
 
 // ── Utilitare ─────────────────────────────────────────────────────────────────
 function getWeekId() {
-  const now = new Date();
-  const day = now.getDay(); // 0=Duminică ... 6=Sâmbătă
-  const monday = new Date(now);
+  const now  = new Date();
+  const day  = now.getDay();
   const diff = (day === 0) ? -6 : 1 - day;
+  const monday = new Date(now);
   monday.setDate(now.getDate() + diff);
   return `${monday.getFullYear()}-W${String(monday.getMonth()+1).padStart(2,'0')}-${String(monday.getDate()).padStart(2,'0')}`;
 }
 
 function getDayKey() {
-  // YYYY-MM-DD
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
 function getDayOfWeek() {
-  // 0=Duminică, 1=Luni, 2=Marți, 3=Miercuri, 4=Joi, 5=Vineri, 6=Sâmbătă
   return new Date().getDay();
 }
 
@@ -281,9 +275,8 @@ function shuffle(arr) {
   return a;
 }
 
-// ── Citire date utilizator din Firestore ──────────────────────────────────────
+// ── Citire date utilizator (cu retry 5x) ─────────────────────────────────────
 async function loadUserData(uid) {
-  // Retry de 5 ori cu 1 secundă pauză — documentul poate să nu fie creat încă
   for (let i = 0; i < 5; i++) {
     const snap = await getDoc(doc(db, "users", uid));
     if (snap.exists()) return snap.data();
@@ -292,57 +285,57 @@ async function loadUserData(uid) {
   return null;
 }
 
-// ── Actualizare scoruri în header ─────────────────────────────────────────────
 function updateScoreHeader(data) {
   document.getElementById("total-wallet").textContent = (data.totalWallet || 0) + " pct";
-  document.getElementById("weekly-score").textContent = (data.weeklyScore || 0) + " pct";
+  document.getElementById("weekly-score").textContent = (data.weeklyScore  || 0) + " pct";
 }
 
-// ── Adaugă puncte în Firestore ────────────────────────────────────────────────
 async function addPoints(uid, points, dayKey) {
   try {
-    const userRef = doc(db, "users", uid);
-    await updateDoc(userRef, {
-      totalWallet:     increment(points),
-      weeklyScore:     increment(points),
-      currentWeekId:   weekId,
-      lastInteractionDate: dayKey,
+    await updateDoc(doc(db, "users", uid), {
+      totalWallet:             increment(points),
+      weeklyScore:             increment(points),
+      currentWeekId:           weekId,
+      lastInteractionDate:     dayKey,
       [`daysPlayed.${dayKey}`]: true,
       weeklyInteractionsCount: increment(1),
     });
-    userData.totalWallet  = (userData.totalWallet  || 0) + points;
-    userData.weeklyScore  = (userData.weeklyScore  || 0) + points;
+    userData.totalWallet = (userData.totalWallet || 0) + points;
+    userData.weeklyScore = (userData.weeklyScore  || 0) + points;
     updateScoreHeader(userData);
   } catch (err) {
     console.error("Eroare la salvarea punctelor:", err);
   }
 }
 
-// ── Reset săptămânal dacă e săptămână nouă ────────────────────────────────────
 async function checkWeeklyReset(uid, data) {
   const newWeekId = getWeekId();
   if (data.currentWeekId && data.currentWeekId !== newWeekId) {
-    await updateDoc(doc(db, "users", uid), {
-      weeklyScore:            0,
-      currentWeekId:          newWeekId,
-      weeklyInteractionsCount: 0,
-      vaultOpenedThisWeek:    false,
-    });
-    data.weeklyScore            = 0;
-    data.currentWeekId          = newWeekId;
+    try {
+      await updateDoc(doc(db, "users", uid), {
+        weeklyScore:             0,
+        currentWeekId:           newWeekId,
+        weeklyInteractionsCount: 0,
+        vaultOpenedThisWeek:     false,
+      });
+    } catch (err) {
+      console.error("Eroare la reset săptămânal:", err);
+    }
+    data.weeklyScore             = 0;
+    data.currentWeekId           = newWeekId;
     data.weeklyInteractionsCount = 0;
-    data.vaultOpenedThisWeek    = false;
+    data.vaultOpenedThisWeek     = false;
   }
   return newWeekId;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// MINI-JOC 1: TAP-TAP (Marți = cappuccino, Joi = ouă benedict)
+// MINI-JOC 1: TAP-TAP
 // ═══════════════════════════════════════════════════════════════════════════════
 function renderTapGame(emoji, label, dayKey) {
   const alreadyPlayed = userData.daysPlayed?.[dayKey] === true;
-
   const main = document.getElementById("main-content");
+
   main.innerHTML = `
     <div class="card">
       <p class="eyebrow">${label}</p>
@@ -364,48 +357,47 @@ function renderTapGame(emoji, label, dayKey) {
 
   if (alreadyPlayed) return;
 
-  let tapCount  = 0;
-  let running   = false;
-  let timeLeft  = TAP_DURATION_SEC;
+  let tapCount      = 0;
+  let running       = false;
+  let timeLeft      = TAP_DURATION_SEC;
   let timerInterval = null;
 
-  const targetEl  = document.getElementById("tap-target");
-  const countEl   = document.getElementById("tap-count");
-  const timerEl   = document.getElementById("tap-timer");
-  const barEl     = document.getElementById("tap-progress-bar");
-  const resultEl  = document.getElementById("tap-result");
-  const startBtn  = document.getElementById("tap-start-btn");
+  const targetEl = document.getElementById("tap-target");
+  const countEl  = document.getElementById("tap-count");
+  const timerEl  = document.getElementById("tap-timer");
+  const barEl    = document.getElementById("tap-progress-bar");
+  const resultEl = document.getElementById("tap-result");
+  const startBtn = document.getElementById("tap-start-btn");
 
   function endGame() {
     running = false;
     clearInterval(timerInterval);
+    activeTimer = null;
     targetEl.style.pointerEvents = "none";
     timerEl.textContent = "Timp expirat!";
-    barEl.style.width = "0%";
+    barEl.style.width   = "0%";
 
-    const pts = Math.max(tapCount * TAP_POINTS_PER_TAP, 5); // minim 5 pct
-
+    const pts = Math.max(tapCount * TAP_POINTS_PER_TAP, 5);
     resultEl.innerHTML = `
       <strong>Ai apăsat de ${tapCount} ori!</strong><br>
       Ai câștigat <span style="color:var(--gold);font-weight:700;">${pts} puncte</span>. 🎉
     `;
-
-    addPoints(currentUser.uid, pts, dayKey); // async cu try/catch intern
+    addPoints(currentUser.uid, pts, dayKey);
   }
 
   function startGame() {
     startBtn.style.display = "none";
-    tapCount = 0;
-    timeLeft = TAP_DURATION_SEC;
-    running  = true;
-    countEl.textContent   = "0";
-    timerEl.textContent   = `${timeLeft}s`;
-    barEl.style.transition = `width ${TAP_DURATION_SEC}s linear`;
-    barEl.style.width       = "0%";
+    tapCount  = 0;
+    timeLeft  = TAP_DURATION_SEC;
+    running   = true;
+    countEl.textContent          = "0";
+    timerEl.textContent          = `${timeLeft}s`;
+    barEl.style.transition       = `width ${TAP_DURATION_SEC}s linear`;
+    barEl.style.width            = "0%";
     targetEl.style.pointerEvents = "auto";
-    resultEl.innerHTML = "";
+    resultEl.innerHTML           = "";
 
-    if (activeTimer) clearInterval(activeTimer); // Oprește timer anterior dacă există
+    if (activeTimer) clearInterval(activeTimer);
     timerInterval = setInterval(() => {
       timeLeft--;
       timerEl.textContent = `${timeLeft}s`;
@@ -420,9 +412,8 @@ function renderTapGame(emoji, label, dayKey) {
     if (!running) return;
     tapCount++;
     countEl.textContent = tapCount;
-    // Animație pop
     targetEl.classList.remove("pop");
-    void targetEl.offsetWidth; // reflow
+    void targetEl.offsetWidth;
     targetEl.classList.add("pop");
     setTimeout(() => targetEl.classList.remove("pop"), 150);
   });
@@ -446,10 +437,9 @@ function renderQuiz(dayKey) {
     return;
   }
 
-  // Alegem 5 întrebări random
-  const selected = shuffle(QUIZ_QUESTIONS).slice(0, 5);
-  let currentIdx = 0;
-  let totalPts   = 0;
+  const selected  = shuffle(QUIZ_QUESTIONS).slice(0, 5);
+  let currentIdx  = 0;
+  let totalPts    = 0;
 
   function renderQuestion() {
     const q = selected[currentIdx];
@@ -471,7 +461,7 @@ function renderQuiz(dayKey) {
 
     document.querySelectorAll(".quiz-opt-btn").forEach(btn => {
       btn.addEventListener("click", () => {
-        const chosen = parseInt(btn.dataset.idx, 10);
+        const chosen  = parseInt(btn.dataset.idx, 10);
         const correct = chosen === q.correct;
 
         document.querySelectorAll(".quiz-opt-btn").forEach(b => {
@@ -497,7 +487,6 @@ function renderQuiz(dayKey) {
       if (currentIdx < selected.length) {
         renderQuestion();
       } else {
-        // Final
         addPoints(currentUser.uid, totalPts, dayKey);
         main.innerHTML = `
           <div class="card" style="text-align:center;">
@@ -558,28 +547,28 @@ function renderScavengerHunt(dayKey) {
       </div>
     `;
 
-    const answerInput  = document.getElementById("hunt-answer");
-    const feedbackEl   = document.getElementById("hunt-feedback");
-    const nextBtn      = document.getElementById("hunt-next-btn");
-    const submitBtn    = document.getElementById("hunt-submit-btn");
-    const hintBtn      = document.getElementById("hunt-hint-btn");
+    const answerInput = document.getElementById("hunt-answer");
+    const feedbackEl  = document.getElementById("hunt-feedback");
+    const nextBtn     = document.getElementById("hunt-next-btn");
+    const submitBtn   = document.getElementById("hunt-submit-btn");
+    const hintBtn     = document.getElementById("hunt-hint-btn");
     let answered = false;
 
     hintBtn.addEventListener("click", () => {
       if (answered || hints > 0) return;
       hints++;
-      hintBtn.disabled = true;
+      hintBtn.disabled    = true;
       hintBtn.textContent = `💡 ${clue.hint}`;
       hintBtn.style.background = "#FFF8E7";
-      hintBtn.style.color = "var(--charcoal)";
+      hintBtn.style.color      = "var(--charcoal)";
     });
 
     function submitAnswer() {
       if (answered) return;
-      const raw    = answerInput.value.trim().toLowerCase();
+      const raw     = answerInput.value.trim().toLowerCase();
       const correct = clue.answers.some(a => raw === a.toLowerCase() || raw.includes(a.toLowerCase()));
       answered = true;
-      submitBtn.disabled = true;
+      submitBtn.disabled   = true;
       answerInput.disabled = true;
 
       const pts = correct ? Math.max(15 - hints * 2, 5) : 3;
@@ -658,56 +647,35 @@ function renderMondayVaultPreview() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// ECRAN WEEKEND (Sâmbătă/Duminică) — Quiz bonus
-// ═══════════════════════════════════════════════════════════════════════════════
-function renderWeekendQuiz(dayKey) {
-  renderQuiz(dayKey); // Refolosim quiz-ul standard
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
 // ROUTER PRINCIPAL
 // ═══════════════════════════════════════════════════════════════════════════════
 function routeToDay() {
   const day    = getDayOfWeek();
   const dayKey = getDayKey();
-  const main   = document.getElementById("main-content");
 
   document.getElementById("loading-state")?.remove();
 
   switch (day) {
-    case 1: // Luni
-      renderMondayVaultPreview();
-      break;
-    case 2: // Marți — Cappuccino Tap
-      renderTapGame("☕", "Marți Cappuccino", dayKey);
-      break;
-    case 3: // Miercuri — Quiz
-      renderQuiz(dayKey);
-      break;
-    case 4: // Joi — Ouă Benedict Tap
-      renderTapGame("🍳", "Joi Ouă Benedict", dayKey);
-      break;
-    case 5: // Vineri — Scavenger Hunt
-      renderScavengerHunt(dayKey);
-      break;
-    case 6: // Sâmbătă — Quiz bonus
-      renderWeekendQuiz(dayKey);
-      break;
-    case 0: // Duminică — Quiz bonus
-      renderWeekendQuiz(dayKey);
-      break;
+    case 1: renderMondayVaultPreview();                    break; // Luni
+    case 2: renderTapGame("☕", "Cappuccino Tap", dayKey); break; // Marți
+    case 3: renderQuiz(dayKey);                            break; // Miercuri
+    case 4: renderTapGame("🍳", "Ouă Benedict Tap", dayKey); break; // Joi
+    case 5: renderScavengerHunt(dayKey);                   break; // Vineri
+    case 6: renderQuiz(dayKey);                            break; // Sâmbătă
+    case 0: renderQuiz(dayKey);                            break; // Duminică
     default:
-      main.innerHTML = `<div class="card"><p>Zi necunoscută — revino în curând!</p></div>`;
+      document.getElementById("main-content").innerHTML =
+        `<div class="card"><p>Zi necunoscută — revino în curând!</p></div>`;
   }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // INIȚIALIZARE
 // ═══════════════════════════════════════════════════════════════════════════════
-let initialized = false; // Previne re-inițializare la refresh token Firebase
+let initialized = false;
 
 onAuthStateChanged(auth, async (user) => {
-  if (initialized) return; // Rulăm doar o dată per sesiune
+  if (initialized) return;
   if (!user) {
     window.location.href = "index.html";
     return;
@@ -717,7 +685,6 @@ onAuthStateChanged(auth, async (user) => {
 
   userData = await loadUserData(user.uid);
   if (!userData) {
-    // Nu am putut încărca datele după 5 încercări
     document.getElementById("main-content").innerHTML = `
       <div class="card" style="text-align:center;padding:32px;">
         <div style="font-size:48px;margin-bottom:12px;">⚠️</div>
@@ -732,7 +699,11 @@ onAuthStateChanged(auth, async (user) => {
   weekId = await checkWeeklyReset(user.uid, userData);
   if (!userData.currentWeekId) {
     userData.currentWeekId = weekId;
-    await updateDoc(doc(db, "users", user.uid), { currentWeekId: weekId });
+    try {
+      await updateDoc(doc(db, "users", user.uid), { currentWeekId: weekId });
+    } catch (err) {
+      console.error("Eroare setare weekId:", err);
+    }
   }
 
   updateScoreHeader(userData);
