@@ -191,11 +191,15 @@ function renderVaultAlreadyOpened(weekId, vaultHistory) {
 }
 
 // ── MAIN ──────────────────────────────────────────────────────────────────────
+let initialized = false; // Previne re-inițializare la refresh token Firebase
+
 onAuthStateChanged(auth, async (user) => {
+  if (initialized) return;
   if (!user) {
     window.location.href = "index.html";
     return;
   }
+  initialized = true;
 
   const snap = await getDoc(doc(db, "users", user.uid));
   if (!snap.exists()) { window.location.href = "index.html"; return; }
@@ -242,7 +246,11 @@ onAuthStateChanged(auth, async (user) => {
     updatePayload.weeklyScore = increment(prize.pts);
   }
 
-  await updateDoc(doc(db, "users", user.uid), updatePayload);
+  try {
+    await updateDoc(doc(db, "users", user.uid), updatePayload);
+  } catch (err) {
+    console.error("Eroare la salvarea vault-ului:", err);
+  }
 
   // Update local pentru header
   if (prize.type === "points" && prize.pts > 0) {
