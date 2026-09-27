@@ -1,83 +1,150 @@
-// auth.js — BistroCuza16 Game
-// Generare cod membru C16-XXXX și creare document Firestore la înregistrare
+// auth-page.js — BistroCuza16 Game
 
-import {
-  auth, db,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  sendPasswordResetEmail,
-  doc, setDoc, getDoc, serverTimestamp,
-  runTransaction
-} from "./firebase-config.js";
+import { loginUser, registerUser, resetPassword } from "./auth.js";
+import { auth, onAuthStateChanged } from "./firebase-config.js";
 
-// Flag global — previne onAuthStateChanged să redirecționeze în timpul înregistrării
-window.__registrationInProgress = false;
+// onAuthStateChanged simplu — funcționează corect pentru că auth.js face signOut după register
+onAuthStateChanged(auth, (user) => {
+  if (user) window.location.href = "game.html";
+});
 
-// Generează cod secvențial C16-0001, C16-0002...
-async function generateMemberCode() {
-  const counterRef = doc(db, "counters", "members");
-  let newCode = "C16-0001";
-  await runTransaction(db, async (transaction) => {
-    const counterSnap = await transaction.get(counterRef);
-    let nextNum = 1;
-    if (counterSnap.exists()) {
-      nextNum = (counterSnap.data().count || 0) + 1;
-      transaction.update(counterRef, { count: nextNum });
-    } else {
-      transaction.set(counterRef, { count: 1 });
-    }
-    newCode = "C16-" + String(nextNum).padStart(4, "0");
-  });
-  return newCode;
+// ── Referințe DOM ────────────────────────────────────────────────────────────
+const loginForm    = document.getElementById("login-form");
+const registerForm = document.getElementById("register-form");
+const resetForm    = document.getElementById("reset-form");
+const alertBox     = document.getElementById("alert-box");
+
+function showForm(formEl) {
+  [loginForm, registerForm, resetForm].forEach(f => f.style.display = "none");
+  formEl.style.display = "block";
+  alertBox.innerHTML = "";
 }
 
-// Înregistrare
-export async function registerUser(email, password, name, birthYear) {
-  const currentYear = new Date().getFullYear();
-  if (currentYear - birthYear < 16) {
-    throw new Error("Trebuie să ai cel puțin 16 ani pentru a participa.");
+// ── Navigare între formulare ─────────────────────────────────────────────────
+document.getElementById("show-register").addEventListener("click", () => showForm(registerForm));
+document.getElementById("show-login").addEventListener("click",    () => showForm(loginForm));
+document.getElementById("show-reset").addEventListener("click",    () => showForm(resetForm));
+document.getElementById("back-to-login").addEventListener("click", () => showForm(loginForm));
+
+// ── Alertă ──────────────────────────────────────────────────────────────────
+function showAlert(msg, type = "error") {
+  alertBox.innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+  alertBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function setLoading(btn, loading) {
+  btn.disabled = loading;
+  btn.textContent = loading ? "Se procesează..." : btn.dataset.label;
+}
+
+document.querySelectorAll(".btn-primary").forEach(btn => {
+  btn.dataset.label = btn.textContent;
+});
+
+// ── Mesaje de eroare Firebase → Română ──────────────────────────────────────
+function friendlyError(code) {
+  const map = {
+    "auth/email-already-in-use":   "Adresa de email este deja folosită de un alt cont.",
+    "auth/invalid-email":          "Adresa de email nu este validă.",
+    "auth/user-not-found":         "Nu există un cont cu această adresă de email.",
+    "auth/wrong-password":         "Parola este incorectă.",
+    "auth/invalid-credential":     "Email sau parolă incorectă.",
+    "auth/weak-password":          "Parola trebuie să aibă cel puțin 6 caractere.",
+    "auth/too-many-requests":      "Prea multe încercări. Încearcă din nou mai târziu.",
+    "auth/network-request-failed": "Eroare de conexiune. Verifică internetul.",
+  };
+  return map[code] || `A apărut o eroare (${code || "necunoscută"}). Încearcă din nou.`;
+}
+
+// ── LOGIN ────────────────────────────────────────────────────────────────────
+document.getElementById("login-btn").addEventListener("click", async () => {
+  const btn      = document.getElementById("login-btn");
+  const email    = document.getElementById("login-email").value.trim();
+  const password = document.getElementById("login-password").value;
+
+  if (!email || !password) { showAlert("Completează toate câmpurile."); return; }
+
+  setLoading(btn, true);
+  try {
+    await loginUser(email, password);
+    // onAuthStateChanged face redirect automat la game.html
+  } catch (err) {
+    showAlert(friendlyError(err.code));
+    setLoading(btn, false);
+  }
+});
+
+document.getElementById("login-password").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") document.getElementById("login-btn").click();
+});
+
+// ── REGISTER ─────────────────────────────────────────────────────────────────
+document.getElementById("register-btn").addEventListener("click", async () => {
+  const btn      = document.getElementById("register-btn");
+  const name     = document.getElementById("reg-name").value.trim();
+  const email    = document.getElementById("reg-email").value.trim();
+  const yearVal  = document.getElementById("reg-year").value.trim();
+  const password = document.getElementById("reg-password").value;
+
+  if (!name || !email || !password) {
+    showAlert("Completează toate câmpurile obligatorii.");
+    return;
   }
 
-  // Blocăm redirecționarea automată până terminăm înregistrarea
-  window.__registrationInProgress = true;
+  const birthYear = yearVal ? parseInt(yearVal, 10) : null;
+  if (yearVal && (isNaN(birthYear) || birthYear < 1920 || birthYear > 2010)) {
+    showAlert("Introdu un an de naștere valid (ex: 1995).");
+    return;
+  }
 
+  if (password.length < 6) {
+    showAlert("Parola trebuie să aibă cel puțin 6 caractere.");
+    return;
+  }
+
+  setLoading(btn, true);
   try {
-    const cred = await createUserWithEmailAndPassword(auth, email, password);
-    const memberCode = await generateMemberCode();
+    const { memberCode } = await registerUser(email, password, name, birthYear);
 
-    await setDoc(doc(db, "users", cred.user.uid), {
-      email: email,
-      displayName: name,
-      memberCode: memberCode,
-      createdAt: serverTimestamp(),
-      birthYear: birthYear,
-      totalWallet: 0,
-      weeklyScore: 0,
-      currentWeekId: "",
-      weeklyInteractionsCount: 0,
-      hasWonRandomDraw: false,
-      vaultOpenedThisWeek: false,
-      lastInteractionDate: "",
-      daysPlayed: {},
-      vaultHistory: {},
-      redemptions: {}
-    });
+    showAlert(
+      `🎉 Cont creat! Codul tău de membru: <strong>${memberCode}</strong><br>
+       <span style="font-size:13px;color:var(--sage);">Te autentificăm automat...</span>`,
+      "success"
+    );
 
-    window.__registrationInProgress = false;
-    return { user: cred.user, memberCode };
+    setTimeout(async () => {
+      try {
+        await loginUser(email, password);
+        // onAuthStateChanged va face redirect la game.html
+      } catch (e) {
+        window.location.href = "index.html";
+      }
+    }, 2000);
 
   } catch (err) {
-    window.__registrationInProgress = false;
-    throw err;
+    const msg = err.message?.startsWith("Trebuie") ? err.message : friendlyError(err.code);
+    showAlert(msg);
+    setLoading(btn, false);
   }
-}
+});
 
-// Login
-export async function loginUser(email, password) {
-  return await signInWithEmailAndPassword(auth, email, password);
-}
+// ── RESET PAROLĂ ─────────────────────────────────────────────────────────────
+document.getElementById("reset-btn").addEventListener("click", async () => {
+  const btn   = document.getElementById("reset-btn");
+  const email = document.getElementById("reset-email").value.trim();
 
-// Resetare parolă
-export async function resetPassword(email) {
-  return await sendPasswordResetEmail(auth, email);
-}
+  if (!email) { showAlert("Introdu adresa de email."); return; }
+
+  setLoading(btn, true);
+  try {
+    await resetPassword(email);
+    showAlert(
+      "📧 Email de resetare trimis! Verifică inbox-ul (și folderul Spam).",
+      "success"
+    );
+    setTimeout(() => showForm(loginForm), 3000);
+  } catch (err) {
+    showAlert(friendlyError(err.code));
+    setLoading(btn, false);
+  }
+});
