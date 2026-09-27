@@ -189,8 +189,12 @@ function getDayKey() {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
+// ── TEST MODE: schimbă numărul de mai jos pentru a testa o altă zi ──
+// 0=Duminică, 1=Luni, 2=Marți, 3=Miercuri, 4=Joi, 5=Vineri, 6=Sâmbătă
+// Setează null pentru ziua reală
 function getDayOfWeek() {
-  return new Date().getDay(); // 0=Duminică,1=Luni...6=Sâmbătă
+  const forced = localStorage.getItem("testDay");
+  return forced !== null ? parseInt(forced) : new Date().getDay();
 }
 
 function shuffle(arr) {
@@ -251,13 +255,12 @@ async function checkStreakBonus(uid) {
   const days = userData.daysPlayed || {};
   const playedCount = Object.keys(days).length;
 
-  // Bonusuri: 3 zile = +5, 5 zile = +15, 7 zile = +30
   const bonusMap = { 3: 5, 5: 15, 7: 30 };
   const bonus = bonusMap[playedCount];
   if (!bonus) return;
 
   const bonusKey = `streakBonusClaimed.streak_${playedCount}`;
-  if (userData[bonusKey]) return; // deja acordat
+  if (userData[bonusKey]) return;
 
   try {
     await updateDoc(doc(db, "users", uid), {
@@ -269,8 +272,6 @@ async function checkStreakBonus(uid) {
     userData.weeklyScore = (userData.weeklyScore  || 0) + bonus;
     userData[bonusKey]   = true;
     updateScoreHeader(userData);
-
-    // Afișăm notificare bonus streak
     showStreakPopup(playedCount, bonus);
   } catch (err) {
     console.error("Eroare streak bonus:", err);
@@ -283,7 +284,7 @@ function showStreakPopup(days, bonus) {
   popup.style.cssText = `
     position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.8);
     background:var(--charcoal);color:#fff;padding:28px 36px;border-radius:20px;
-    text-align:center;z-index:999;opacity:0;transition:all .4s cubic-bezier(.34,1.56,.64,1);
+    text-align:center;z-index:9999;opacity:0;transition:all .4s cubic-bezier(.34,1.56,.64,1);
     box-shadow:0 8px 40px rgba(0,0,0,0.3);pointer-events:none;
   `;
   popup.innerHTML = `
@@ -306,10 +307,10 @@ function showStreakPopup(days, bonus) {
 
 // ── Bara de progres streak ────────────────────────────────────────────────────
 function renderStreakBar() {
-  const days       = userData.daysPlayed || {};
-  const count      = Object.keys(days).length;
-  const isDouble   = isDoublePointsDay();
-  const container  = document.getElementById("streak-bar-wrap");
+  const days      = userData.daysPlayed || {};
+  const count     = Object.keys(days).length;
+  const isDouble  = isDoublePointsDay();
+  const container = document.getElementById("streak-bar-wrap");
   if (!container) return;
 
   const pips = [1,2,3,4,5,6,7].map(n => `
@@ -335,7 +336,7 @@ function renderStreakBar() {
         ${count >= 7 ? "🏆 Săptămână perfectă! +30 pct bonus câștigat!" :
           count >= 5 ? "🌟 5+ zile! +15 pct bonus câștigat!" :
           count >= 3 ? "🔥 3+ zile! +5 pct bonus câștigat!" :
-          `Mai ${3 - count > 0 ? 3 - count : 0} zi${3 - count === 1 ? '' : 'le'} pentru primul bonus!`}
+          `Mai ${Math.max(0, 3 - count)} zi${(3 - count) === 1 ? '' : 'le'} pentru primul bonus!`}
       </div>
       ${isDouble ? `<div style="background:#FFF8E7;border-radius:8px;padding:8px 12px;margin-top:8px;font-size:12px;font-weight:600;color:var(--gold);">⭐ AZI CÂȘTIGI DUBLU! Toate punctele x2</div>` : ""}
     </div>
@@ -373,7 +374,7 @@ async function checkWeeklyReset(uid, data) {
 // ═══════════════════════════════════════════════════════════════════════════════
 function renderCatchGame(emoji, label, dayKey, splashEmoji) {
   const alreadyPlayed = userData.daysPlayed?.[dayKey] === true;
-  const main = document.getElementById("main-content");
+  const main   = document.getElementById("main-content");
   const double = isDoublePointsDay();
 
   main.innerHTML = `
@@ -412,14 +413,15 @@ function renderCatchGame(emoji, label, dayKey, splashEmoji) {
 
   if (alreadyPlayed) return;
 
-  let score     = 0;
-  let combo     = 1;
+  let score       = 0;
+  let combo       = 1;
   let comboStreak = 0;
-  let running   = false;
-  let timeLeft  = GAME_DURATION_SEC;
+  let running     = false;
+  let timeLeft    = GAME_DURATION_SEC;
   let timerInterval = null;
   let spawnInterval = null;
-  let spawnDelay = 1200; // ms între obiecte — scade cu combo
+  let spawnDelay    = 1200;
+
   const arena   = document.getElementById("catch-arena");
   const scoreEl = document.getElementById("catch-score");
   const comboEl = document.getElementById("catch-combo");
@@ -427,160 +429,7 @@ function renderCatchGame(emoji, label, dayKey, splashEmoji) {
   const startBtn = document.getElementById("catch-start-btn");
   const timerBar = document.getElementById("catch-timer-bar");
 
-  function spawnObject() {
-    if (!running) return;
-    const obj = document.createElement("div");
-    const left = 8 + Math.random() * 72; // % din lățime
-    const speed = 2.5 + Math.random() * 2.5 - (combo > 2 ? 0.5 : 0); // sec să cadă
-    const size  = 48 + Math.floor(Math.random() * 16); // 48-64px
-    obj.textContent = emoji;
-    obj.style.cssText = `
-      position:absolute;left:${left}%;top:-60px;
-      font-size:${size}px;line-height:1;
-      cursor:pointer;user-select:none;touch-action:manipulation;
-      transition:top ${speed}s linear;
-      filter:drop-shadow(0 4px 8px rgba(0,0,0,0.15));
-    `;
-    arena.appendChild(obj);
-
-    // animație cădere
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        obj.style.top = "105%";
-      });
-    });
-
-    // click / tap pe obiect
-    function onTap(e) {
-      e.stopPropagation();
-      if (!running) return;
-      obj.removeEventListener("click", onTap);
-      obj.removeEventListener("touchstart", onTap);
-
-      comboStreak++;
-      if (comboStreak >= 3) { combo = 3; }
-      else if (comboStreak >= 2) { combo = 2; }
-      else { combo = 1; }
-
-      const pts = combo;
-      score += pts;
-      scoreEl.textContent = score;
-      comboEl.textContent = `x${combo}`;
-      comboEl.style.color = combo >= 3 ? "var(--gold)" : combo === 2 ? "#7A8C6E" : "var(--charcoal)";
-
-      // splash emoji la tap
-      const splash = document.createElement("div");
-      splash.textContent = splashEmoji || "💥";
-      const rect = obj.getBoundingClientRect();
-      const arenaRect = arena.getBoundingClientRect();
-      splash.style.cssText = `
-        position:absolute;
-        left:${rect.left - arenaRect.left + rect.width/2 - 20}px;
-        top:${rect.top  - arenaRect.top  + rect.height/2 - 20}px;
-        font-size:40px;pointer-events:none;
-        animation:splashAnim 0.4s ease forwards;
-        z-index:10;
-      `;
-      arena.appendChild(splash);
-      setTimeout(() => splash.remove(), 400);
-
-      // combo badge
-      if (combo > 1) {
-        const badge = document.createElement("div");
-        badge.textContent = combo === 3 ? "🔥 x3 COMBO!" : "⚡ x2";
-        badge.style.cssText = `
-          position:absolute;
-          left:${rect.left - arenaRect.left}px;
-          top:${rect.top  - arenaRect.top  - 24}px;
-          font-size:13px;font-weight:700;
-          color:${combo >= 3 ? "var(--gold)" : "var(--sage)"};
-          pointer-events:none;
-          animation:floatUp 0.6s ease forwards;
-          z-index:11;white-space:nowrap;
-        `;
-        arena.appendChild(badge);
-        setTimeout(() => badge.remove(), 600);
-      }
-
-      obj.remove();
-
-      // velocitate crescută la combo
-      spawnDelay = Math.max(500, 1200 - (combo - 1) * 200 - score * 4);
-    }
-
-    obj.addEventListener("click", onTap);
-    obj.addEventListener("touchstart", onTap, { passive: true });
-
-    // obiectul a ajuns jos fără să fie prins — reset combo
-    const fallTimeout = setTimeout(() => {
-      if (obj.parentNode) {
-        obj.remove();
-        comboStreak = 0;
-        combo = 1;
-        comboEl.textContent = "x1";
-        comboEl.style.color = "var(--charcoal)";
-      }
-    }, speed * 1000 + 200);
-
-    obj._fallTimeout = fallTimeout;
-  }
-
-  function startSpawning() {
-    spawnObject();
-    spawnInterval = setInterval(() => {
-      if (!running) return;
-      spawnObject();
-      // re-schedule cu delay curent
-      clearInterval(spawnInterval);
-      if (running) {
-        spawnInterval = setInterval(() => { if (running) spawnObject(); }, spawnDelay);
-      }
-    }, spawnDelay);
-  }
-
-  function endGame() {
-    running = false;
-    clearInterval(timerInterval);
-    clearInterval(spawnInterval);
-    activeTimer = null;
-    // ridicăm toate obiectele rămase
-    arena.querySelectorAll("div").forEach(el => el.remove());
-
-    const finalPts = Math.max(score, 5);
-    const multi    = isDoublePointsDay() ? " (x2 azi!)" : "";
-    resultEl.innerHTML = `
-      <strong>Ai prins ${score} ${emoji}!</strong><br>
-      Ai câștigat <span style="color:var(--gold);font-weight:700;">${finalPts} puncte</span>${multi} 🎉
-    `;
-    addPoints(currentUser.uid, finalPts, dayKey);
-  }
-
-  function startGame() {
-    startBtn.style.display = "none";
-    score = 0; combo = 1; comboStreak = 0; running = true;
-    timeLeft = GAME_DURATION_SEC;
-    spawnDelay = 1200;
-    scoreEl.textContent = "0";
-    comboEl.textContent = "x1";
-    resultEl.innerHTML  = "";
-
-    // pornire timer bar
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        timerBar.style.width = "0%";
-      });
-    });
-
-    timerInterval = setInterval(() => {
-      timeLeft--;
-      if (timeLeft <= 0) endGame();
-    }, 1000);
-    activeTimer = timerInterval;
-
-    startSpawning();
-  }
-
-  // CSS animații inline
+  // CSS animații
   const style = document.createElement("style");
   style.textContent = `
     @keyframes splashAnim {
@@ -594,6 +443,125 @@ function renderCatchGame(emoji, label, dayKey, splashEmoji) {
   `;
   document.head.appendChild(style);
 
+  function spawnObject() {
+    if (!running) return;
+    const obj   = document.createElement("div");
+    const left  = 8 + Math.random() * 72;
+    const speed = 2.5 + Math.random() * 2 - (combo > 2 ? 0.5 : 0);
+    const size  = 48 + Math.floor(Math.random() * 16);
+
+    obj.textContent = emoji;
+    obj.style.cssText = `
+      position:absolute;left:${left}%;top:-60px;
+      font-size:${size}px;line-height:1;
+      cursor:pointer;user-select:none;touch-action:manipulation;
+      transition:top ${speed}s linear;
+      filter:drop-shadow(0 4px 8px rgba(0,0,0,0.15));
+    `;
+    arena.appendChild(obj);
+
+    requestAnimationFrame(() => requestAnimationFrame(() => { obj.style.top = "105%"; }));
+
+    function onTap(e) {
+      e.stopPropagation();
+      if (!running) return;
+      obj.removeEventListener("click", onTap);
+      obj.removeEventListener("touchstart", onTap);
+
+      comboStreak++;
+      combo = comboStreak >= 3 ? 3 : comboStreak >= 2 ? 2 : 1;
+
+      score += combo;
+      scoreEl.textContent = score;
+      comboEl.textContent = `x${combo}`;
+      comboEl.style.color = combo >= 3 ? "var(--gold)" : combo === 2 ? "#7A8C6E" : "var(--charcoal)";
+
+      // splash
+      const rect      = obj.getBoundingClientRect();
+      const arenaRect = arena.getBoundingClientRect();
+      const splash    = document.createElement("div");
+      splash.textContent = splashEmoji || "💥";
+      splash.style.cssText = `
+        position:absolute;
+        left:${rect.left - arenaRect.left + rect.width/2 - 20}px;
+        top:${rect.top  - arenaRect.top  + rect.height/2 - 20}px;
+        font-size:40px;pointer-events:none;
+        animation:splashAnim 0.4s ease forwards;z-index:10;
+      `;
+      arena.appendChild(splash);
+      setTimeout(() => splash.remove(), 400);
+
+      // combo badge
+      if (combo > 1) {
+        const badge = document.createElement("div");
+        badge.textContent = combo === 3 ? "🔥 x3 COMBO!" : "⚡ x2";
+        badge.style.cssText = `
+          position:absolute;
+          left:${rect.left - arenaRect.left}px;
+          top:${rect.top  - arenaRect.top  - 24}px;
+          font-size:13px;font-weight:700;white-space:nowrap;
+          color:${combo >= 3 ? "var(--gold)" : "var(--sage)"};
+          pointer-events:none;animation:floatUp 0.6s ease forwards;z-index:11;
+        `;
+        arena.appendChild(badge);
+        setTimeout(() => badge.remove(), 600);
+      }
+
+      obj.remove();
+      spawnDelay = Math.max(500, 1200 - (combo - 1) * 200 - score * 4);
+    }
+
+    obj.addEventListener("click", onTap);
+    obj.addEventListener("touchstart", onTap, { passive: true });
+
+    setTimeout(() => {
+      if (obj.parentNode) {
+        obj.remove();
+        comboStreak = 0; combo = 1;
+        comboEl.textContent = "x1";
+        comboEl.style.color = "var(--charcoal)";
+      }
+    }, speed * 1000 + 200);
+  }
+
+  function startSpawning() {
+    spawnObject();
+    spawnInterval = setInterval(() => {
+      if (!running) return;
+      spawnObject();
+      clearInterval(spawnInterval);
+      if (running) spawnInterval = setInterval(() => { if (running) spawnObject(); }, spawnDelay);
+    }, spawnDelay);
+  }
+
+  function endGame() {
+    running = false;
+    clearInterval(timerInterval);
+    clearInterval(spawnInterval);
+    activeTimer = null;
+    arena.querySelectorAll("div").forEach(el => el.remove());
+
+    const finalPts = Math.max(score, 5);
+    resultEl.innerHTML = `
+      <strong>Ai prins ${score} ${emoji}!</strong><br>
+      Ai câștigat <span style="color:var(--gold);font-weight:700;">${finalPts} puncte</span>${isDoublePointsDay() ? " (x2 azi!)" : ""} 🎉
+    `;
+    addPoints(currentUser.uid, finalPts, dayKey);
+  }
+
+  function startGame() {
+    startBtn.style.display = "none";
+    score = 0; combo = 1; comboStreak = 0; running = true;
+    timeLeft = GAME_DURATION_SEC; spawnDelay = 1200;
+    scoreEl.textContent = "0"; comboEl.textContent = "x1"; resultEl.innerHTML = "";
+
+    requestAnimationFrame(() => requestAnimationFrame(() => { timerBar.style.width = "0%"; }));
+
+    timerInterval = setInterval(() => { timeLeft--; if (timeLeft <= 0) endGame(); }, 1000);
+    activeTimer   = timerInterval;
+    startSpawning();
+  }
+
   startBtn.addEventListener("click", startGame);
 }
 
@@ -602,7 +570,7 @@ function renderCatchGame(emoji, label, dayKey, splashEmoji) {
 // ═══════════════════════════════════════════════════════════════════════════════
 function renderQuiz(dayKey) {
   const alreadyPlayed = userData.daysPlayed?.[dayKey] === true;
-  const main = document.getElementById("main-content");
+  const main   = document.getElementById("main-content");
   const double = isDoublePointsDay();
 
   if (alreadyPlayed) {
@@ -616,12 +584,12 @@ function renderQuiz(dayKey) {
     return;
   }
 
-  const selected = shuffle(QUIZ_QUESTIONS).slice(0, 5);
-  let currentIdx = 0;
-  let totalPts   = 0;
+  const selected  = shuffle(QUIZ_QUESTIONS).slice(0, 5);
+  let currentIdx  = 0;
+  let totalPts    = 0;
 
   function renderQuestion() {
-    const q = selected[currentIdx];
+    const q      = selected[currentIdx];
     const optHtml = q.opts.map((opt, i) =>
       `<button class="quiz-opt-btn" data-idx="${i}">${opt}</button>`
     ).join("");
@@ -686,15 +654,12 @@ function renderQuiz(dayKey) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// MINI-JOC 3: STAFF / MENU HUNT (Sâmbătă & Duminică)
-// Întrebarea vine din Firestore: config/weeklyHunt
+// MINI-JOC 3: STAFF / MENU HUNT
 // ═══════════════════════════════════════════════════════════════════════════════
 async function renderWeeklyHunt(dayKey, isMenuDay) {
   const alreadyPlayed = userData.daysPlayed?.[dayKey] === true;
-  const main = document.getElementById("main-content");
-
-  // Titlu și icon diferit sâmbătă vs duminică
-  const title = isMenuDay ? "Menu Hunt 🍽️" : "Staff Hunt 🕵️";
+  const main    = document.getElementById("main-content");
+  const title   = isMenuDay ? "Menu Hunt 🍽️" : "Staff Hunt 🕵️";
   const eyebrow = isMenuDay ? "Vânătoarea de meniu" : "Vânătoarea de personal";
 
   if (alreadyPlayed) {
@@ -708,7 +673,6 @@ async function renderWeeklyHunt(dayKey, isMenuDay) {
     return;
   }
 
-  // Afișăm loading
   main.innerHTML = `
     <div class="card">
       <p class="eyebrow">${eyebrow}</p>
@@ -717,17 +681,15 @@ async function renderWeeklyHunt(dayKey, isMenuDay) {
     </div>
   `;
 
-  // Citim întrebarea din Firestore
   let huntData = null;
   try {
     const huntKey = isMenuDay ? "menuHunt" : "staffHunt";
-    const snap = await getDoc(doc(db, "config", huntKey));
+    const snap    = await getDoc(doc(db, "config", huntKey));
     if (snap.exists()) huntData = snap.data();
   } catch (err) {
     console.error("Eroare la citirea hunt:", err);
   }
 
-  // Fallback dacă admin nu a setat întrebarea
   if (!huntData || !huntData.question) {
     main.innerHTML = `
       <div class="card" style="text-align:center;">
@@ -743,7 +705,6 @@ async function renderWeeklyHunt(dayKey, isMenuDay) {
     return;
   }
 
-  // Afișăm întrebarea
   main.innerHTML = `
     <div class="card">
       <p class="eyebrow">${eyebrow}</p>
@@ -774,18 +735,16 @@ async function renderWeeklyHunt(dayKey, isMenuDay) {
   function submitAnswer() {
     if (answered) return;
     const raw = answerInput.value.trim().toLowerCase();
-    if (!raw) { feedbackEl.innerHTML = `<span style="color:var(--red);">Scrie un răspuns înainte să trimiți.</span>`; return; }
+    if (!raw) { feedbackEl.innerHTML = `<span style="color:red;">Scrie un răspuns înainte să trimiți.</span>`; return; }
 
-    // Verificăm răspunsul — acceptăm mai multe variante corecte
     const correctAnswers = (huntData.answers || [huntData.answer || ""]).map(a => a.toLowerCase().trim());
-    const isCorrect = correctAnswers.some(a => raw === a || raw.includes(a) || a.includes(raw));
+    const isCorrect      = correctAnswers.some(a => raw === a || raw.includes(a) || a.includes(raw));
 
     answered = true;
     submitBtn.disabled   = true;
     answerInput.disabled = true;
 
     const pts = isCorrect ? 20 : 5;
-
     feedbackEl.innerHTML = `
       ${isCorrect
         ? `✅ <strong>Corect! Bravo!</strong> +${pts} puncte 🎉`
@@ -794,7 +753,6 @@ async function renderWeeklyHunt(dayKey, isMenuDay) {
       }<br>
       <span style="font-size:13px;color:var(--sage);margin-top:4px;display:block;">${huntData.explanation || ""}</span>
     `;
-
     addPoints(currentUser.uid, pts, dayKey);
   }
 
@@ -806,9 +764,9 @@ async function renderWeeklyHunt(dayKey, isMenuDay) {
 // ECRAN LUNI — preview Vault
 // ═══════════════════════════════════════════════════════════════════════════════
 function renderMondayVaultPreview() {
-  const main = document.getElementById("main-content");
+  const main          = document.getElementById("main-content");
   const alreadyOpened = userData.vaultOpenedThisWeek === true;
-  const days  = Object.keys(userData.daysPlayed || {}).length;
+  const days          = Object.keys(userData.daysPlayed || {}).length;
 
   main.innerHTML = `
     <div class="card" style="text-align:center;">
@@ -855,47 +813,29 @@ function routeToDay() {
   document.getElementById("loading-state")?.remove();
 
   switch (day) {
-    case 1: // Luni
-      renderMondayVaultPreview();
-      break;
-    case 2: // Marți — Catch Cappuccino
-      renderCatchGame("☕", "Prinde Cappuccino-urile! ☕", dayKey, "💦");
-      break;
-    case 3: // Miercuri — Quiz (DOUBLE POINTS)
-      renderQuiz(dayKey);
-      break;
-    case 4: // Joi — Catch Ouă
-      renderCatchGame("🥚", "Sparge Ouăle! 🥚", dayKey, "🍳");
-      break;
-    case 5: // Vineri — Quiz
-      renderQuiz(dayKey);
-      break;
-    case 6: // Sâmbătă — Staff Hunt
-      renderWeeklyHunt(dayKey, false);
-      break;
-    case 0: // Duminică — Menu Hunt
-      renderWeeklyHunt(dayKey, true);
-      break;
+    case 1: renderMondayVaultPreview(); break;
+    case 2: renderCatchGame("☕", "Prinde Cappuccino-urile! ☕", dayKey, "💦"); break;
+    case 3: renderQuiz(dayKey); break;
+    case 4: renderCatchGame("🥚", "Sparge Ouăle! 🥚", dayKey, "🍳"); break;
+    case 5: renderQuiz(dayKey); break;
+    case 6: renderWeeklyHunt(dayKey, false); break;
+    case 0: renderWeeklyHunt(dayKey, true); break;
     default:
       document.getElementById("main-content").innerHTML =
         `<div class="card"><p>Revino în curând!</p></div>`;
   }
 
-  // Streak bar sub joc
   setTimeout(renderStreakBar, 100);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// INIȚIALIZARE
+// INIȚIALIZARE + TEST BAR
 // ═══════════════════════════════════════════════════════════════════════════════
 let initialized = false;
 
 onAuthStateChanged(auth, async (user) => {
   if (initialized) return;
-  if (!user) {
-    window.location.href = "index.html";
-    return;
-  }
+  if (!user) { window.location.href = "index.html"; return; }
   initialized = true;
   currentUser = user;
 
@@ -915,13 +855,38 @@ onAuthStateChanged(auth, async (user) => {
   weekId = await checkWeeklyReset(user.uid, userData);
   if (!userData.currentWeekId) {
     userData.currentWeekId = weekId;
-    try {
-      await updateDoc(doc(db, "users", user.uid), { currentWeekId: weekId });
-    } catch (err) {
-      console.error("Eroare setare weekId:", err);
-    }
+    try { await updateDoc(doc(db, "users", user.uid), { currentWeekId: weekId }); } catch(e) {}
   }
 
   updateScoreHeader(userData);
+
+  // ── TEST BAR — șterge acest bloc înainte de lansare ──────────────────────
+  const testBar = document.createElement("div");
+  testBar.style.cssText = `
+    position:fixed;bottom:70px;left:0;right:0;z-index:9999;
+    background:rgba(20,20,20,0.95);padding:8px 12px;
+    display:flex;gap:6px;justify-content:center;flex-wrap:wrap;
+    border-top:1px solid #444;
+  `;
+  const days = [["L",1],["Ma",2],["Mi",3],["J",4],["V",5],["S",6],["D",0]];
+  const forced = localStorage.getItem("testDay");
+  testBar.innerHTML = days.map(([label, d]) => `
+    <button onclick="localStorage.setItem('testDay','${d}');location.reload();"
+      style="
+        background:${forced === String(d) ? '#E8C47A' : '#333'};
+        color:${forced === String(d) ? '#000' : '#fff'};
+        border:none;border-radius:8px;padding:6px 14px;
+        font-size:13px;font-weight:700;cursor:pointer;
+      ">${label}</button>
+  `).join("") + `
+    <button onclick="localStorage.removeItem('testDay');location.reload();"
+      style="background:#c0392b;color:#fff;border:none;border-radius:8px;
+      padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;">
+      REAL
+    </button>
+  `;
+  document.body.appendChild(testBar);
+  // ── SFÂRȘIT TEST BAR ──────────────────────────────────────────────────────
+
   routeToDay();
 });
