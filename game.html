@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cuza16 Game — Joacă</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* ── Tap game ─────────────────────────────────────────────── */
+    #tap-area {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 12px; padding: 20px 0 24px;
+    }
+    #tap-target {
+      font-size: 90px; line-height: 1;
+      cursor: pointer; user-select: none;
+      transition: transform 80ms ease;
+      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.12));
+    }
+    #tap-target:active { transform: scale(0.85); }
+    #tap-target.pop { animation: tapPop 120ms ease; }
+    @keyframes tapPop {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.22); }
+      100% { transform: scale(1); }
+    }
+    #tap-count {
+      font-family: 'Playfair Display', serif;
+      font-size: 48px; font-weight: 700;
+      color: var(--gold); line-height: 1;
+    }
+    #tap-timer {
+      font-family: 'Inter', sans-serif;
+      font-size: 13px; color: var(--sage);
+      letter-spacing: 1px;
+    }
+    #tap-progress {
+      width: 100%; height: 6px;
+      background: var(--sand); border-radius: 3px; overflow: hidden;
+    }
+    #tap-progress-bar {
+      height: 100%; background: var(--gold);
+      border-radius: 3px;
+      transition: width 1s linear;
+    }
+    #tap-result {
+      font-family: 'Inter', sans-serif;
+      font-size: 14px; color: var(--charcoal);
+      text-align: center; padding: 12px 0;
+    }
+    #tap-start-btn {
+      width: 100%; margin-top: 8px;
+    }
+
+    /* ── Quiz ─────────────────────────────────────────────────── */
+    .quiz-question {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px; font-weight: 600;
+      line-height: 1.4; margin-bottom: 20px;
+      color: var(--charcoal);
+    }
+    .quiz-options { display: flex; flex-direction: column; gap: 10px; }
+    .quiz-opt-btn {
+      background: var(--cream); border: 1.5px solid var(--sand);
+      border-radius: 10px; padding: 13px 16px;
+      font-family: 'Inter', sans-serif; font-size: 14px;
+      color: var(--charcoal); text-align: left;
+      cursor: pointer; transition: border-color 0.18s, background 0.18s;
+    }
+    .quiz-opt-btn:hover { border-color: var(--gold); background: #FBF8F3; }
+    .quiz-opt-btn.correct { border-color: #4CAF50; background: #F0FBF0; color: #2E7D32; }
+    .quiz-opt-btn.wrong   { border-color: #E53935; background: #FFF0F0; color: #B71C1C; }
+    .quiz-opt-btn:disabled { cursor: default; }
+    #quiz-feedback {
+      margin-top: 14px; font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      line-height: 1.5; color: var(--charcoal);
+    }
+    #quiz-next-btn { width: 100%; margin-top: 14px; }
+
+    /* ── Scavenger Hunt ───────────────────────────────────────── */
+    .hunt-clue {
+      font-family: 'Playfair Display', serif;
+      font-size: 17px; font-weight: 600;
+      line-height: 1.5; color: var(--charcoal);
+      margin-bottom: 18px;
+    }
+    .hunt-answer-wrap { position: relative; }
+    .hunt-answer-wrap input {
+      width: 100%; padding: 13px 16px;
+      border: 1.5px solid var(--sand); border-radius: 10px;
+      font-family: 'Inter', sans-serif; font-size: 15px;
+      background: var(--cream); color: var(--charcoal);
+      box-sizing: border-box;
+    }
+    .hunt-answer-wrap input:focus { outline: none; border-color: var(--gold); }
+    #hunt-submit-btn { width: 100%; margin-top: 12px; }
+    #hunt-feedback {
+      margin-top: 12px; font-size: 14px;
+      font-family: 'Inter', sans-serif; line-height: 1.5;
+    }
+    #hunt-next-btn { width: 100%; margin-top: 10px; }
+
+    /* ── Locked state ─────────────────────────────────────────── */
+    .game-locked {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 12px; padding: 32px 0;
+    }
+    .game-locked .lock-icon { font-size: 52px; }
+    .game-locked h2 { font-size: 18px; text-align: center; margin: 0; }
+    .game-locked p  { font-size: 13px; color: var(--sage); text-align: center; margin: 0; }
+
+    /* ── Already played badge ─────────────────────────────────── */
+    .played-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: #F0FBF0; border: 1.5px solid #4CAF50;
+      border-radius: 24px; padding: 8px 16px;
+      font-family: 'Inter', sans-serif; font-size: 13px; color: #2E7D32;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <!-- ── Headerul cu scoruri ───────────────────────────────────────── -->
+  <header class="score-header">
+    <div class="score-block">
+      <span class="score-label">Total Portofel</span>
+      <span class="score-value" id="total-wallet">—</span>
+    </div>
+    <div class="score-center">
+      <img src="logo.png" alt="Cuza16" class="header-logo" onerror="this.style.display='none'">
+    </div>
+    <div class="score-block">
+      <span class="score-label">Scor Săptămânal</span>
+      <span class="score-value" id="weekly-score">—</span>
+    </div>
+  </header>
+
+  <!-- ── Conținut principal ─────────────────────────────────────────── -->
+  <main class="page-content" id="main-content">
+    <div class="loading-spinner" id="loading-state">
+      <div class="spinner"></div>
+      <p>Se încarcă provocarea zilei...</p>
+    </div>
+  </main>
+
+  <!-- ── Navigare de jos ───────────────────────────────────────────── -->
+  <nav class="bottom-nav">
+    <a href="game.html"        class="nav-item active"><span class="nav-icon">🎮</span><span class="nav-label">Joacă</span></a>
+    <a href="vault.html"       class="nav-item"><span class="nav-icon">🔐</span><span class="nav-label">Vault</span></a>
+    <a href="leaderboard.html" class="nav-item"><span class="nav-icon">🏆</span><span class="nav-label">Clasament</span></a>
+    <a href="shop.html"        class="nav-item"><span class="nav-icon">🛍️</span><span class="nav-label">Magazin</span></a>
+  </nav>
+
+  <!-- ── Modal sheet generat dinamic ──────────────────────────────── -->
+  <div class="modal-overlay" id="modal-overlay" style="display:none;">
+    <div class="modal-sheet" id="modal-sheet"></div>
+  </div>
+
+  <script type="module" src="game.js"></script>
+</body>
+</html>

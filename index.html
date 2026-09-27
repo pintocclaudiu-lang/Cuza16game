@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cuza16 Game</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .auth-wrap { width: 100%; max-width: 440px; padding: 24px 20px; }
+    .auth-logo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 32px;
+      gap: 8px;
+    }
+    .auth-logo img { height: 48px; width: auto; }
+    .auth-logo-name {
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--sage);
+    }
+    .auth-logo-game {
+      font-family: 'Playfair Display', serif;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--charcoal);
+      opacity: 0.6;
+    }
+    .back-link {
+      display: block;
+      text-align: center;
+      font-size: 12px;
+      color: var(--sage);
+      margin-bottom: 12px;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    #reset-form h1 { font-size: 22px; }
+  </style>
+</head>
+<body>
+  <div class="auth-wrap">
+    <div class="auth-logo">
+      <img src="logo.png" alt="Cuza16" onerror="this.style.display='none'">
+      <div class="auth-logo-name">Cuza16 Cafe Bistro</div>
+      <div class="auth-logo-game">Jocul tău de fidelitate</div>
+    </div>
+
+    <div id="alert-box"></div>
+
+    <!-- LOGIN FORM -->
+    <div class="card" id="login-form">
+      <p class="eyebrow">Bun venit înapoi</p>
+      <h1>Autentificare</h1>
+      <p class="subtitle" style="margin-bottom:22px;">Joacă provocarea zilei și urmărește-ți punctele.</p>
+
+      <div class="field">
+        <label for="login-email">Email</label>
+        <input type="email" id="login-email" required autocomplete="email">
+      </div>
+      <div class="field" style="margin-bottom:8px;">
+        <label for="login-password">Parolă</label>
+        <input type="password" id="login-password" required autocomplete="current-password">
+      </div>
+      <div class="forgot-link">
+        <a id="show-reset">Ai uitat parola?</a>
+      </div>
+
+      <button class="btn btn-primary" id="login-btn">Autentificare</button>
+      <div class="toggle-auth">
+        Nu ai cont încă? <a id="show-register">Creează cont</a>
+      </div>
+    </div>
+
+    <!-- REGISTER FORM -->
+    <div class="card" id="register-form" style="display:none;">
+      <p class="eyebrow">Cont nou</p>
+      <h1>Înregistrare</h1>
+      <p class="subtitle" style="margin-bottom:22px;">Alătură-te comunității Cuza16 și câștigă recompense.</p>
+
+      <div class="field">
+        <label for="reg-name">Prenume și Nume</label>
+        <input type="text" id="reg-name" required autocomplete="name">
+      </div>
+      <div class="field">
+        <label for="reg-email">Email</label>
+        <input type="email" id="reg-email" required autocomplete="email">
+      </div>
+      <div class="field">
+        <label for="reg-year">Anul nașterii</label>
+        <input type="number" id="reg-year" min="1940" max="2010" placeholder="ex: 1995">
+      </div>
+      <div class="field">
+        <label for="reg-password">Parolă (min. 6 caractere)</label>
+        <input type="password" id="reg-password" required autocomplete="new-password">
+      </div>
+
+      <button class="btn btn-primary" id="register-btn">Creează cont</button>
+      <div class="toggle-auth">
+        Ai deja cont? <a id="show-login">Autentifică-te</a>
+      </div>
+    </div>
+
+    <!-- RESET FORM -->
+    <div class="card" id="reset-form" style="display:none;">
+      <a class="back-link" id="back-to-login">← Înapoi la login</a>
+      <p class="eyebrow">Resetare parolă</p>
+      <h1>Ai uitat parola?</h1>
+      <p class="subtitle" style="margin-bottom:22px;">Introduceți adresa de email și vă vom trimite un link de resetare.</p>
+
+      <div class="field">
+        <label for="reset-email">Email</label>
+        <input type="email" id="reset-email" required>
+      </div>
+      <button class="btn btn-primary" id="reset-btn">Trimite link de resetare</button>
+    </div>
+  </div>
+
+  <script type="module" src="auth-page.js"></script>
+</body>
+</html>
