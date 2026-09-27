@@ -6,9 +6,12 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
-  doc, setDoc, serverTimestamp,
-  runTransaction, getDoc
+  doc, setDoc, getDoc, serverTimestamp,
+  runTransaction
 } from "./firebase-config.js";
+
+// Flag global — previne onAuthStateChanged să redirecționeze în timpul înregistrării
+window.__registrationInProgress = false;
 
 // Generează cod secvențial C16-0001, C16-0002...
 async function generateMemberCode() {
@@ -35,28 +38,38 @@ export async function registerUser(email, password, name, birthYear) {
     throw new Error("Trebuie să ai cel puțin 16 ani pentru a participa.");
   }
 
-  const cred = await createUserWithEmailAndPassword(auth, email, password);
-  const memberCode = await generateMemberCode();
+  // Blocăm redirecționarea automată până terminăm înregistrarea
+  window.__registrationInProgress = true;
 
-  await setDoc(doc(db, "users", cred.user.uid), {
-    email: email,
-    displayName: name,
-    memberCode: memberCode,
-    createdAt: serverTimestamp(),
-    birthYear: birthYear,
-    totalWallet: 0,
-    weeklyScore: 0,
-    currentWeekId: "",
-    weeklyInteractionsCount: 0,
-    hasWonRandomDraw: false,
-    vaultOpenedThisWeek: false,
-    lastInteractionDate: "",
-    daysPlayed: {},
-    vaultHistory: {},
-    redemptions: {}
-  });
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    const memberCode = await generateMemberCode();
 
-  return { user: cred.user, memberCode };
+    await setDoc(doc(db, "users", cred.user.uid), {
+      email: email,
+      displayName: name,
+      memberCode: memberCode,
+      createdAt: serverTimestamp(),
+      birthYear: birthYear,
+      totalWallet: 0,
+      weeklyScore: 0,
+      currentWeekId: "",
+      weeklyInteractionsCount: 0,
+      hasWonRandomDraw: false,
+      vaultOpenedThisWeek: false,
+      lastInteractionDate: "",
+      daysPlayed: {},
+      vaultHistory: {},
+      redemptions: {}
+    });
+
+    window.__registrationInProgress = false;
+    return { user: cred.user, memberCode };
+
+  } catch (err) {
+    window.__registrationInProgress = false;
+    throw err;
+  }
 }
 
 // Login
